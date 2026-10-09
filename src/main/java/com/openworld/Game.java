@@ -15,6 +15,7 @@ import com.openworld.world.TrafficLightSystem;
 
 import com.openworld.gameplay.DeliveryManager;
 import com.openworld.lighting.LightingSystem;
+import com.openworld.visual.DeliveryVisual;
 
 import com.openworld.validation.LogicValidator;
 
@@ -28,6 +29,8 @@ public class Game {
 
   private static final float TITLE_UPDATE_INTERVAL = 0.20f;
 
+  private static final int DELIVERY_POINT_COUNT = 3;
+
   private Window window;
   private Input input;
 
@@ -38,6 +41,7 @@ public class Game {
   private Car car;
 
   private DeliveryManager deliveryManager;
+  private DeliveryVisual deliveryVisual;
   private LightingSystem lighting;
 
   private TrafficLightSystem trafficLights;
@@ -114,7 +118,13 @@ public class Game {
 
     lighting.update(car);
 
-    deliveryManager = new DeliveryManager(city);
+    deliveryManager = new DeliveryManager(
+        city,
+        car.getX(),
+        car.getZ(),
+        DELIVERY_POINT_COUNT);
+
+    deliveryVisual = new DeliveryVisual();
 
     camera = new Camera();
     /**
@@ -445,7 +455,14 @@ public class Game {
 
     trafficLights.render(renderer);
 
-    deliveryManager.render(renderer);
+    if (deliveryManager.hasActiveDestination()) {
+      deliveryVisual.render(
+          renderer,
+          deliveryManager.getCurrentDestinationX(),
+          deliveryManager.getCurrentDestinationZ(),
+          deliveryManager.getArrivalRadius(),
+          deliveryManager.getElapsedTime());
+    }
 
     /*
      * El tráfico autónomo se dibuja antes del automóvil

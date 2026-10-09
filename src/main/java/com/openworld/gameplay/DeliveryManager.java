@@ -1,415 +1,227 @@
 package com.openworld.gameplay;
 
-import com.openworld.render.Renderer;
 import com.openworld.vehicle.Car;
 import com.openworld.world.City;
 
+import java.util.Random;
+
 public final class DeliveryManager {
 
-  /*
-   * ============================================================
-   * CONFIGURACIÓN
-   * ============================================================
-   */
-
   private static final float ARRIVAL_RADIUS = 3.0f;
-
   private static final float MAX_DELIVERY_SPEED = 1.0f;
+  private static final float MIN_DESTINATION_DISTANCE = 30.0f;
+  private static final float DESTINATION_CLEARANCE = 0.35f;
+  private static final int MAX_GENERATION_ATTEMPTS = 5000;
 
-  private static final int BEACON_RING_SEGMENTS = 12;
-
-  private static final float BEACON_HEIGHT = 2.75f;
-
-  private static final float BEACON_PULSE_HEIGHT = 0.25f;
-
-  private static final float BEACON_CORE_SIZE = 0.82f;
-
-  private static final float BEACON_RING_RADIUS = 0.78f;
-
-  /*
-   * Cada destino se define mediante:
-   *
-   * { fila, columna }
-   *
-   * Las posiciones seleccionadas pertenecen a calles
-   * y recorren distintas zonas de la ciudad.
-   */
-  private static final int[][] DESTINATION_CELLS = {
-
-      { 1, 1 },
-      { 9, 9 },
-      { 1, 9 }
-  };
-
-  /*
-   * ============================================================
-   * DESTINOS EN COORDENADAS DEL MUNDO
-   * ============================================================
-   */
-
-  private final float[] destinationX = new float[DESTINATION_CELLS.length];
-
-  private final float[] destinationZ = new float[DESTINATION_CELLS.length];
-
-  /*
-   * ============================================================
-   * ESTADO
-   * ============================================================
-   */
-
+  private final City city;
+  private final Random random = new Random();
+  private final float spawnX;
+  private final float spawnZ;
+  private final float[] destinationX;
+  private final float[] destinationZ;
   private int currentDestinationIndex;
-
   private int completedDeliveries;
-
   private float elapsedTime;
-
   private boolean finished;
 
-  public DeliveryManager(
-      City city) {
+  public DeliveryManager(City city, float spawnX, float spawnZ,
+                         int destinationCount) {
+    if (city == null) {
+      throw new IllegalArgumentException("La ciudad no puede ser null");
+    }
+    if (destinationCount <= 0) {
+      throw new IllegalArgumentException(
+          "La cantidad de destinos debe ser mayor que 0");
+    }
+    if (!city.canDrive(spawnX, spawnZ, 0.0f)) {
+      throw new IllegalArgumentException(
+          "El punto inicial del vehiculo no es transitable");
+    }
 
-    initializeDestinations(
-        city);
-
+    this.city = city;
+    this.spawnX = spawnX;
+    this.spawnZ = spawnZ;
+    destinationX = new float[destinationCount];
+    destinationZ = new float[destinationCount];
     reset();
   }
 
-  /*
-   * ============================================================
-   * INICIALIZACIÓN
-   * ============================================================
-   */
+  private void generateDestinations() {
+    float referenceX = spawnX;
+    float referenceZ = spawnZ;
 
-  private void initializeDestinations(
-      City city) {
-
-    for (int i = 0; i < DESTINATION_CELLS.length; i++) {
-
-      int row = DESTINATION_CELLS[i][0];
-
-      int column = DESTINATION_CELLS[i][1];
-
-      if (!city.isRoadCell(
-          row,
-          column)) {
-
-        throw new IllegalStateException(
-            "El destino "
-                + i
-                + " no se encuentra sobre una calle");
-      }
-
-      destinationX[i] = city.getCellCenterX(
-          column);
-
-      destinationZ[i] = city.getCellCenterZ(
-          row);
-
-      System.out.printf(
-          "Destino %d -> "
-              + "celda [%d, %d] "
-              + "posición (%.1f, %.1f)%n",
-
-          i + 1,
-          row,
-          column,
-          destinationX[i],
-          destinationZ[i]);
+    for (int i = 0; i < getTotalDestinations(); i++) {
+      generateDestination(i, referenceX, referenceZ);
+      referenceX = destinationX[i];
+      referenceZ = destinationZ[i];
     }
+
+    printGeneratedDestinations();
   }
 
-  /*
-   * ============================================================
-   * ACTUALIZACIÓN
-   * ============================================================
-   */
+  private void generateDestination(int destinationIndex,
+                                   float referenceX,
+                                   float referenceZ) {
+    float halfWorldSize = city.getWorldSize() / 2.0f;
+    float requiredRadius = getRequiredDestinationRadius();
+    float minimumCoordinate = -halfWorldSize + requiredRadius;
+    float maximumCoordinate = halfWorldSize - requiredRadius;
 
-  public void update(
-      float deltaTime,
-      Car car) {
+    for (int attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt++) {
+      float candidateX = randomRange(minimumCoordinate, maximumCoordinate);
+      float candidateZ = randomRange(minimumCoordinate, maximumCoordinate);
 
-    if (finished) {
+      if (!hasMinimumDistance(referenceX, referenceZ,
+          candidateX, candidateZ)) {
+        continue;
+      }
+      if (!city.canDrive(candidateX, candidateZ, requiredRadius)) {
+        continue;
+      }
+
+      destinationX[destinationIndex] = candidateX;
+      destinationZ[destinationIndex] = candidateZ;
       return;
     }
 
-    elapsedTime += deltaTime;
+    throw new IllegalStateException(
+        "No se pudo generar el destino " + (destinationIndex + 1)
+            + " despues de " + MAX_GENERATION_ATTEMPTS + " intentos");
+  }
 
-    float targetX = destinationX[currentDestinationIndex];
+  private boolean hasMinimumDistance(float referenceX, float referenceZ,
+                                     float candidateX, float candidateZ) {
+    float deltaX = candidateX - referenceX;
+    float deltaZ = candidateZ - referenceZ;
+    return deltaX * deltaX + deltaZ * deltaZ
+        >= MIN_DESTINATION_DISTANCE * MIN_DESTINATION_DISTANCE;
+  }
 
-    float targetZ = destinationZ[currentDestinationIndex];
+  private float randomRange(float minimum, float maximum) {
+    return minimum + random.nextFloat() * (maximum - minimum);
+  }
 
-    float deltaX = car.getX()
-        - targetX;
+  private void printGeneratedDestinations() {
+    System.out.printf("Ruta de entregas generada: %d destinos%n",
+        getTotalDestinations());
+    float referenceX = spawnX;
+    float referenceZ = spawnZ;
+    for (int i = 0; i < getTotalDestinations(); i++) {
+      float deltaX = destinationX[i] - referenceX;
+      float deltaZ = destinationZ[i] - referenceZ;
+      float distance = (float) Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
+      System.out.printf("Destino %d/%d -> (%.2f, %.2f)"
+              + " | distancia desde referencia: %.2f%n",
+          i + 1, getTotalDestinations(), destinationX[i], destinationZ[i],
+          distance);
+      referenceX = destinationX[i];
+      referenceZ = destinationZ[i];
+    }
+  }
 
-    float deltaZ = car.getZ()
-        - targetZ;
+  public void update(float deltaTime, Car car) {
+    if (finished) {
+      return;
+    }
+    if (car == null) {
+      throw new IllegalArgumentException("El vehiculo no puede ser null");
+    }
+    if (deltaTime > 0.0f) {
+      elapsedTime += deltaTime;
+    }
 
-    float distanceSquared = deltaX * deltaX
-        + deltaZ * deltaZ;
-
-    float arrivalRadiusSquared = ARRIVAL_RADIUS
-        * ARRIVAL_RADIUS;
-
-    boolean insideDestination = distanceSquared <= arrivalRadiusSquared;
-
-    boolean slowEnough = Math.abs(
-        car.getSpeed()) <= MAX_DELIVERY_SPEED;
-
-    if (insideDestination
-        && slowEnough) {
-
+    float deltaX = car.getX() - destinationX[currentDestinationIndex];
+    float deltaZ = car.getZ() - destinationZ[currentDestinationIndex];
+    float distanceSquared = deltaX * deltaX + deltaZ * deltaZ;
+    boolean insideDestination = distanceSquared
+        <= ARRIVAL_RADIUS * ARRIVAL_RADIUS;
+    boolean slowEnough = Math.abs(car.getSpeed()) <= MAX_DELIVERY_SPEED;
+    if (insideDestination && slowEnough) {
       completeCurrentDelivery();
     }
   }
 
-  /*
-   * ============================================================
-   * FINALIZACIÓN DE ENTREGA
-   * ============================================================
-   */
-
   private void completeCurrentDelivery() {
-
     completedDeliveries++;
-
-    System.out.printf(
-        "Entrega %d/%d completada%n",
-        completedDeliveries,
-        getTotalDestinations());
-
+    System.out.printf("Entrega %d/%d completada%n",
+        completedDeliveries, getTotalDestinations());
     if (completedDeliveries >= getTotalDestinations()) {
-
       finished = true;
-
       currentDestinationIndex = getTotalDestinations();
-
-      System.out.printf(
-          "Recorrido completado en %.2f segundos%n",
-          elapsedTime);
-
+      System.out.printf("Recorrido completado en %.2f segundos%n", elapsedTime);
       return;
     }
-
     currentDestinationIndex++;
-
-    System.out.printf(
-        "Nuevo destino -> %d%n",
-        currentDestinationIndex + 1);
+    System.out.printf("Nuevo destino -> %d/%d%n",
+        currentDestinationIndex + 1, getTotalDestinations());
   }
-
-  /*
-   * ============================================================
-   * RENDER
-   * ============================================================
-   */
-
-  public void render(
-      Renderer renderer) {
-
-    if (finished) {
-      return;
-    }
-
-    float x = destinationX[currentDestinationIndex];
-
-    float z = destinationZ[currentDestinationIndex];
-
-    renderer.box(
-        x,
-        0.075f,
-        z,
-
-        ARRIVAL_RADIUS * 2.0f,
-        0.02f,
-        ARRIVAL_RADIUS * 2.0f,
-
-        0.95f,
-        0.72f,
-        0.08f);
-
-    /*
-     * Una baliza flotante facilita la identificación
-     * del destino desde ambas cámaras.
-     */
-    float verticalOffset = (float) Math.sin(
-        elapsedTime * 3.0f)
-        * BEACON_PULSE_HEIGHT;
-
-    renderer.box(
-        x,
-        BEACON_HEIGHT + verticalOffset,
-        z,
-
-        BEACON_CORE_SIZE,
-        BEACON_CORE_SIZE,
-        BEACON_CORE_SIZE,
-
-        1.0f,
-        0.85f,
-        0.15f);
-
-    renderer.emissiveBox(
-        x,
-        BEACON_HEIGHT + verticalOffset,
-        z,
-
-        BEACON_CORE_SIZE * 0.72f,
-        BEACON_CORE_SIZE * 0.72f,
-        BEACON_CORE_SIZE * 0.72f,
-
-        1.0f,
-        0.72f,
-        0.08f,
-
-        1.20f);
-
-    /*
-     * Un segundo elemento aumenta la visibilidad
-     * de la baliza desde largas distancias.
-     */
-    renderer.box(
-        x,
-        1.6f + verticalOffset,
-        z,
-
-        0.25f,
-        2.0f,
-        0.25f,
-
-        1.0f,
-        0.65f,
-        0.05f);
-
-    drawBeaconRing(
-        renderer,
-        x,
-        z,
-        verticalOffset);
-  }
-
-  private void drawBeaconRing(
-      Renderer renderer,
-      float centerX,
-      float centerZ,
-      float verticalOffset) {
-
-    float ringY = BEACON_HEIGHT
-        + verticalOffset;
-
-    for (int segment = 0; segment < BEACON_RING_SEGMENTS; segment++) {
-
-      float angle = (float) (2.0 * Math.PI
-          * segment
-          / BEACON_RING_SEGMENTS);
-
-      float segmentX = centerX
-          + (float) Math.cos(angle)
-              * BEACON_RING_RADIUS;
-
-      float segmentZ = centerZ
-          + (float) Math.sin(angle)
-              * BEACON_RING_RADIUS;
-
-      renderer.emissiveBox(
-          segmentX,
-          ringY,
-          segmentZ,
-
-          0.22f,
-          0.08f,
-          0.22f,
-
-          1.0f,
-          0.45f,
-          0.03f,
-
-          0.90f);
-    }
-  }
-
-  /*
-   * ============================================================
-   * RESET
-   * ============================================================
-   */
 
   public void reset() {
-
+    generateDestinations();
     currentDestinationIndex = 0;
-
     completedDeliveries = 0;
-
     elapsedTime = 0.0f;
-
     finished = false;
   }
 
-  /*
-   * ============================================================
-   * CONSULTAS
-   * ============================================================
-   */
+  public boolean hasActiveDestination() { return !finished; }
 
-  public boolean hasActiveDestination() {
+  public boolean isFinished() { return finished; }
 
-    return !finished;
-  }
+  public int getCompletedDeliveries() { return completedDeliveries; }
 
-  public boolean isFinished() {
-
-    return finished;
-  }
-
-  public int getCompletedDeliveries() {
-
-    return completedDeliveries;
-  }
-
-  public int getTotalDestinations() {
-
-    return destinationX.length;
-  }
+  public int getTotalDestinations() { return destinationX.length; }
 
   public int getCurrentDestinationNumber() {
-
-    if (finished) {
-      return getTotalDestinations();
-    }
-
-    return currentDestinationIndex
-        + 1;
+    return finished ? getTotalDestinations() : currentDestinationIndex + 1;
   }
 
-  public float getElapsedTime() {
-
-    return elapsedTime;
-  }
+  public float getElapsedTime() { return elapsedTime; }
 
   public float getCurrentDestinationX() {
-
     ensureActiveDestination();
-
     return destinationX[currentDestinationIndex];
   }
 
   public float getCurrentDestinationZ() {
-
     ensureActiveDestination();
-
     return destinationZ[currentDestinationIndex];
   }
 
-  public float getArrivalRadius() {
-
-    return ARRIVAL_RADIUS;
+  public float getDestinationX(int index) {
+    validateDestinationIndex(index);
+    return destinationX[index];
   }
 
+  public float getDestinationZ(int index) {
+    validateDestinationIndex(index);
+    return destinationZ[index];
+  }
+
+  public float getArrivalRadius() { return ARRIVAL_RADIUS; }
+
+  public float getMinimumDestinationDistance() {
+    return MIN_DESTINATION_DISTANCE;
+  }
+
+  public float getRequiredDestinationRadius() {
+    return ARRIVAL_RADIUS + DESTINATION_CLEARANCE;
+  }
+
+  public float getSpawnX() { return spawnX; }
+
+  public float getSpawnZ() { return spawnZ; }
+
   private void ensureActiveDestination() {
-
     if (finished) {
+      throw new IllegalStateException("No existe un destino activo");
+    }
+  }
 
-      throw new IllegalStateException(
-          "No existe un destino activo");
+  private void validateDestinationIndex(int index) {
+    if (index < 0 || index >= getTotalDestinations()) {
+      throw new IndexOutOfBoundsException(
+          "Indice de destino invalido: " + index);
     }
   }
 }

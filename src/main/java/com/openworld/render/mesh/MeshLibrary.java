@@ -12,6 +12,10 @@ public final class MeshLibrary {
 
   private static final int CIRCLE_SEGMENTS = 24;
 
+  private static final int RING_SEGMENTS = 48;
+
+  private static final float RING_INNER_RADIUS_RATIO = 0.84f;
+
   private static final float WINDOW_FRAME_BORDER_RATIO = 0.12f;
 
   private final Mesh cube;
@@ -27,6 +31,8 @@ public final class MeshLibrary {
   private final Mesh windowFrame;
 
   private final Mesh circle;
+
+  private final Mesh ring;
 
   private final Mesh vehicleBody;
 
@@ -69,6 +75,10 @@ public final class MeshLibrary {
 
     circle = new Mesh(
         MeshFactory.createCircle(CIRCLE_SEGMENTS));
+
+    ring = new Mesh(
+        MeshFactory.createRing(RING_SEGMENTS,
+            RING_INNER_RADIUS_RATIO));
 
     vehicleBody = new Mesh(
         MeshFactory.createVehicleBody());
@@ -127,6 +137,11 @@ public final class MeshLibrary {
     return circle;
   }
 
+  public Mesh getRing() {
+
+    return ring;
+  }
+
   public Mesh getVehicleBody() {
 
     return vehicleBody;
@@ -175,6 +190,7 @@ public final class MeshLibrary {
     sphere.cleanup();
     cylinder.cleanup();
     circle.cleanup();
+    ring.cleanup();
     windowFrame.cleanup();
     quad.cleanup();
     cube.cleanup();

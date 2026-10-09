@@ -166,6 +166,53 @@ public final class MeshFactory {
     return new MeshData(vertices, indices);
   }
 
+  public static MeshData createRing(int segments,
+                                    float innerRadiusRatio) {
+
+    if (segments < 3) {
+      throw new IllegalArgumentException(
+          "El anillo requiere al menos 3 segmentos");
+    }
+    if (innerRadiusRatio <= 0.0f || innerRadiusRatio >= 1.0f) {
+      throw new IllegalArgumentException(
+          "El radio interior debe estar entre 0 y 1");
+    }
+
+    float[] vertices = new float[segments * 2 * FLOATS_PER_VERTEX];
+    int[] indices = new int[segments * 6];
+    float innerRadius = 0.5f * innerRadiusRatio;
+    int vertexOffset = 0;
+
+    for (int segment = 0; segment < segments; segment++) {
+      float angle = (float) (Math.PI * 2.0 * segment / segments);
+      float cos = (float) Math.cos(angle);
+      float sin = (float) Math.sin(angle);
+      vertexOffset = putVertex(vertices, vertexOffset,
+          cos * 0.5f, sin * 0.5f, 0.0f,
+          0.0f, 0.0f, 1.0f);
+      vertexOffset = putVertex(vertices, vertexOffset,
+          cos * innerRadius, sin * innerRadius, 0.0f,
+          0.0f, 0.0f, 1.0f);
+    }
+
+    int indexOffset = 0;
+    for (int segment = 0; segment < segments; segment++) {
+      int next = (segment + 1) % segments;
+      int outerCurrent = segment * 2;
+      int innerCurrent = outerCurrent + 1;
+      int outerNext = next * 2;
+      int innerNext = outerNext + 1;
+      indices[indexOffset++] = outerCurrent;
+      indices[indexOffset++] = outerNext;
+      indices[indexOffset++] = innerNext;
+      indices[indexOffset++] = outerCurrent;
+      indices[indexOffset++] = innerNext;
+      indices[indexOffset++] = innerCurrent;
+    }
+
+    return new MeshData(vertices, indices);
+  }
+
   private static int appendBoxVertices(
       float[] vertices,
       int offset,

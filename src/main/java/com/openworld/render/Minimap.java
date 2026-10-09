@@ -102,7 +102,7 @@ public final class Minimap {
 
   private boolean visible = true;
 
-  private Mode mode = Mode.NORTH_UP;
+  private Mode mode = Mode.HEADING_UP;
 
   /*
    * ============================================================
@@ -119,7 +119,7 @@ public final class Minimap {
 
     visible = true;
 
-    mode = Mode.NORTH_UP;
+    mode = Mode.HEADING_UP;
   }
 
   public boolean isVisible() {

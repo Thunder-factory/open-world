@@ -858,20 +858,33 @@ public final class LogicValidator {
 
         "El tiempo inicial debe ser 0");
 
-    float destinationX = deliveryManager.getCurrentDestinationX();
+    float referenceX = deliveryManager.getSpawnX();
+    float referenceZ = deliveryManager.getSpawnZ();
+    float minimumDistance =
+        deliveryManager.getMinimumDestinationDistance();
+    float requiredRadius = deliveryManager.getRequiredDestinationRadius();
 
-    float destinationZ = deliveryManager.getCurrentDestinationZ();
+    for (int i = 0; i < deliveryManager.getTotalDestinations(); i++) {
+      float destinationX = deliveryManager.getDestinationX(i);
+      float destinationZ = deliveryManager.getDestinationZ(i);
+      require(Float.isFinite(destinationX)
+              && Float.isFinite(destinationZ),
+          "El destino " + (i + 1)
+              + " contiene coordenadas invalidas");
+      require(city.canDrive(destinationX, destinationZ, requiredRadius),
+          "El destino " + (i + 1)
+              + " no se encuentra completamente sobre una zona transitable");
+      float deltaX = destinationX - referenceX;
+      float deltaZ = destinationZ - referenceZ;
+      require(deltaX * deltaX + deltaZ * deltaZ
+              >= minimumDistance * minimumDistance,
+          "El destino " + (i + 1)
+              + " esta demasiado cerca del punto anterior");
+      referenceX = destinationX;
+      referenceZ = destinationZ;
+    }
 
-    require(
-        city.canDrive(
-            destinationX,
-            destinationZ,
-            0.1f),
-
-        "El destino activo no esta sobre una zona transitable");
-
-    pass(
-        "Estado inicial de entregas");
+    pass("Generacion aleatoria y secuencial de entregas");
   }
 
   /*
@@ -991,8 +1004,8 @@ public final class LogicValidator {
         "El minimapa debe iniciar visible");
 
     require(
-        minimap.getMode() == Minimap.Mode.NORTH_UP,
-        "El minimapa debe iniciar con norte arriba");
+        minimap.getMode() == Minimap.Mode.HEADING_UP,
+        "El minimapa debe iniciar con el vehiculo orientado arriba");
 
     pass(
         "Estado inicial del minimapa");

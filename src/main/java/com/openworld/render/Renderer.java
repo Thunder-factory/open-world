@@ -607,12 +607,36 @@ public final class Renderer {
       float rotationY,
       Material material) {
 
+    circle(x, y, z, diameter, 0.0f, rotationY, 0.0f, material);
+  }
+
+  public void circle(
+      float x, float y, float z,
+      float diameter,
+      float rotationX, float rotationY, float rotationZ,
+      Material material) {
+
     if (diameter <= 0.0f) {
       return;
     }
 
     drawMesh(meshLibrary.getCircle(), x, y, z,
-        0.0f, rotationY, 0.0f,
+        rotationX, rotationY, rotationZ,
+        diameter, diameter, 1.0f, material);
+  }
+
+  public void ring(
+      float x, float y, float z,
+      float diameter,
+      float rotationX, float rotationY, float rotationZ,
+      Material material) {
+
+    if (diameter <= 0.0f) {
+      return;
+    }
+
+    drawMesh(meshLibrary.getRing(), x, y, z,
+        rotationX, rotationY, rotationZ,
         diameter, diameter, 1.0f, material);
   }
 
