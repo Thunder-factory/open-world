@@ -1,5 +1,7 @@
 package com.openworld.render.mesh;
 
+import static com.openworld.vehicle.VehicleGeometry.*;
+
 public final class MeshFactory {
 
   private static final int FLOATS_PER_VERTEX = 6;
@@ -130,6 +132,36 @@ public final class MeshFactory {
         verticalX, 0.0f, 0.0f,
         borderRatio, sideHeight, 1.0f);
     appendBoxIndices(indices, indexOffset, baseVertex);
+
+    return new MeshData(vertices, indices);
+  }
+
+  public static MeshData createCircle(int segments) {
+
+    if (segments < 3) {
+      throw new IllegalArgumentException(
+          "El circulo requiere al menos 3 segmentos");
+    }
+
+    float[] vertices = new float[(segments + 1) * FLOATS_PER_VERTEX];
+    int[] indices = new int[segments * 3];
+    int vertexOffset = putVertex(vertices, 0,
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+
+    for (int segment = 0; segment < segments; segment++) {
+      float angle = (float) (Math.PI * 2.0 * segment / segments);
+      vertexOffset = putVertex(vertices, vertexOffset,
+          (float) Math.cos(angle) * 0.5f,
+          (float) Math.sin(angle) * 0.5f,
+          0.0f, 0.0f, 0.0f, 1.0f);
+    }
+
+    int indexOffset = 0;
+    for (int segment = 0; segment < segments; segment++) {
+      indices[indexOffset++] = 0;
+      indices[indexOffset++] = 1 + segment;
+      indices[indexOffset++] = 1 + (segment + 1) % segments;
+    }
 
     return new MeshData(vertices, indices);
   }
@@ -519,12 +551,15 @@ public final class MeshFactory {
   public static MeshData createVehicleBody() {
 
     float[][] sections = {
-        { -2.15f, 0.92f, 0.34f, 0.72f },
-        { -1.35f, 1.05f, 0.30f, 0.92f },
-        { -0.70f, 0.82f, 0.30f, 1.42f },
-        { 0.72f, 0.80f, 0.30f, 1.42f },
-        { 1.35f, 1.02f, 0.30f, 0.85f },
-        { 2.15f, 0.90f, 0.34f, 0.70f }
+        { FRONT_FACE_Z, 0.82f, 0.34f, 0.60f },
+        { -1.70f, 0.98f, 0.27f, 0.70f },
+        { -1.10f, 1.00f, 0.27f, 0.80f },
+        { -0.66f, 0.93f, 0.29f, 0.85f },
+        { -0.22f, 0.82f, 0.29f, 1.28f },
+        { 0.42f, 0.82f, 0.29f, 1.30f },
+        { 0.88f, 0.92f, 0.30f, 0.86f },
+        { 1.20f, 0.94f, 0.32f, 0.69f },
+        { REAR_FACE_Z, 0.84f, 0.36f, 0.60f }
     };
 
     int quadCount = (sections.length - 1) * 4 + 2;
@@ -586,54 +621,182 @@ public final class MeshFactory {
 
   public static MeshData createVehicleGlass() {
 
-    int panelCount = 6;
+    final int panelCount = 6;
     float[] vertices = new float[panelCount * 4 * FLOATS_PER_VERTEX];
     int[] indices = new int[panelCount * 6];
     int panel = 0;
 
-    appendFlatQuad(vertices, indices, panel++,
-        -0.84f, 0.95f, -1.33f,
-        0.84f, 0.95f, -1.33f,
-        0.72f, 1.43f, -0.72f,
-        -0.72f, 1.43f, -0.72f,
-        0.0f, 0.70f, -0.70f);
+    appendOffsetFlatQuad(vertices, indices, panel++,
+        -0.82f, 0.92f, -0.59f, 0.82f, 0.92f, -0.59f,
+        0.71f, 1.21f, -0.29f, -0.71f, 1.21f, -0.29f,
+        0.0f, 1.0f, -1.0f, GLASS_OFFSET);
 
-    appendFlatQuad(vertices, indices, panel++,
-        -0.70f, 1.43f, 0.74f,
-        0.70f, 1.43f, 0.74f,
-        0.84f, 0.88f, 1.33f,
-        -0.84f, 0.88f, 1.33f,
-        0.0f, 0.70f, 0.70f);
+    appendOffsetFlatQuad(vertices, indices, panel++,
+        -0.71f, 1.23f, 0.49f, 0.71f, 1.23f, 0.49f,
+        0.81f, 0.92f, 0.82f, -0.81f, 0.92f, 0.82f,
+        0.0f, 1.0f, 1.0f, GLASS_OFFSET);
 
-    appendFlatQuad(vertices, indices, panel++,
-        -0.835f, 0.92f, -0.58f,
-        -0.835f, 1.35f, -0.54f,
-        -0.815f, 1.35f, 0.00f,
-        -0.815f, 0.90f, 0.00f,
-        -1.0f, 0.0f, 0.0f);
+    appendOffsetFlatQuad(vertices, indices, panel++,
+        -0.885f, 0.94f, -0.52f, -0.825f, 1.21f, -0.18f,
+        -0.825f, 1.22f, 0.04f, -0.825f, 0.94f, 0.04f,
+        -1.0f, 0.0f, 0.0f, GLASS_OFFSET);
 
-    appendFlatQuad(vertices, indices, panel++,
-        -0.815f, 0.90f, 0.05f,
-        -0.815f, 1.35f, 0.05f,
-        -0.825f, 1.34f, 0.62f,
-        -0.825f, 0.90f, 0.62f,
-        -1.0f, 0.0f, 0.0f);
+    appendOffsetFlatQuad(vertices, indices, panel++,
+        -0.825f, 0.94f, 0.19f, -0.825f, 1.22f, 0.19f,
+        -0.835f, 1.15f, 0.46f, -0.865f, 0.94f, 0.75f,
+        -1.0f, 0.0f, 0.0f, GLASS_OFFSET);
 
-    appendFlatQuad(vertices, indices, panel++,
-        0.835f, 0.92f, -0.58f,
-        0.815f, 0.90f, 0.00f,
-        0.815f, 1.35f, 0.00f,
-        0.835f, 1.35f, -0.54f,
-        1.0f, 0.0f, 0.0f);
+    appendOffsetFlatQuad(vertices, indices, panel++,
+        0.885f, 0.94f, -0.52f, 0.825f, 0.94f, 0.04f,
+        0.825f, 1.22f, 0.04f, 0.825f, 1.21f, -0.18f,
+        1.0f, 0.0f, 0.0f, GLASS_OFFSET);
 
-    appendFlatQuad(vertices, indices, panel,
-        0.815f, 0.90f, 0.05f,
-        0.825f, 0.90f, 0.62f,
-        0.825f, 1.34f, 0.62f,
-        0.815f, 1.35f, 0.05f,
-        1.0f, 0.0f, 0.0f);
+    appendOffsetFlatQuad(vertices, indices, panel,
+        0.825f, 0.94f, 0.19f, 0.865f, 0.94f, 0.75f,
+        0.835f, 1.15f, 0.46f, 0.825f, 1.22f, 0.19f,
+        1.0f, 0.0f, 0.0f, GLASS_OFFSET);
 
     return new MeshData(vertices, indices);
+  }
+
+  public static MeshData createVehicleGlassTrim() {
+
+    final int panelCount = 6;
+    float[] vertices = new float[panelCount * 4 * FLOATS_PER_VERTEX];
+    int[] indices = new int[panelCount * 6];
+    int panel = 0;
+
+    appendOffsetFlatQuad(vertices, indices, panel++,
+        -0.90f, 0.875f, -0.64f, 0.90f, 0.875f, -0.64f,
+        0.78f, 1.255f, -0.24f, -0.78f, 1.255f, -0.24f,
+        0.0f, 1.0f, -1.0f, GLASS_TRIM_OFFSET);
+
+    appendOffsetFlatQuad(vertices, indices, panel++,
+        -0.78f, 1.275f, 0.44f, 0.78f, 1.275f, 0.44f,
+        0.88f, 0.885f, 0.86f, -0.88f, 0.885f, 0.86f,
+        0.0f, 1.0f, 1.0f, GLASS_TRIM_OFFSET);
+
+    appendOffsetFlatQuad(vertices, indices, panel++,
+        -0.895f, 0.91f, -0.57f, -0.825f, 1.25f, -0.20f,
+        -0.825f, 1.26f, 0.08f, -0.825f, 0.91f, 0.08f,
+        -1.0f, 0.0f, 0.0f, GLASS_TRIM_OFFSET);
+
+    appendOffsetFlatQuad(vertices, indices, panel++,
+        -0.825f, 0.91f, 0.15f, -0.825f, 1.26f, 0.15f,
+        -0.835f, 1.20f, 0.48f, -0.885f, 0.91f, 0.82f,
+        -1.0f, 0.0f, 0.0f, GLASS_TRIM_OFFSET);
+
+    appendOffsetFlatQuad(vertices, indices, panel++,
+        0.895f, 0.91f, -0.57f, 0.825f, 0.91f, 0.08f,
+        0.825f, 1.26f, 0.08f, 0.825f, 1.25f, -0.20f,
+        1.0f, 0.0f, 0.0f, GLASS_TRIM_OFFSET);
+
+    appendOffsetFlatQuad(vertices, indices, panel,
+        0.825f, 0.91f, 0.15f, 0.885f, 0.91f, 0.82f,
+        0.835f, 1.20f, 0.48f, 0.825f, 1.26f, 0.15f,
+        1.0f, 0.0f, 0.0f, GLASS_TRIM_OFFSET);
+
+    return new MeshData(vertices, indices);
+  }
+
+  public static MeshData createVehicleFrontLights() {
+
+    float[] vertices = new float[2 * 4 * FLOATS_PER_VERTEX];
+    int[] indices = new int[2 * 6];
+    float z = FRONT_LIGHT_SURFACE_Z;
+
+    appendFlatQuad(vertices, indices, 0,
+        -0.70f, 0.47f, z, -0.34f, 0.47f, z,
+        -0.38f, 0.61f, z, -0.67f, 0.61f, z,
+        0.0f, 0.0f, -1.0f);
+
+    appendFlatQuad(vertices, indices, 1,
+        0.34f, 0.47f, z, 0.70f, 0.47f, z,
+        0.67f, 0.61f, z, 0.38f, 0.61f, z,
+        0.0f, 0.0f, -1.0f);
+
+    return new MeshData(vertices, indices);
+  }
+
+  public static MeshData createVehicleGrille() {
+
+    float[] vertices = new float[4 * FLOATS_PER_VERTEX];
+    int[] indices = new int[6];
+    float z = FRONT_FACE_Z - SURFACE_EPSILON - 0.001f;
+
+    appendFlatQuad(vertices, indices, 0,
+        -0.46f, 0.355f, z, 0.46f, 0.355f, z,
+        0.39f, 0.455f, z, -0.39f, 0.455f, z,
+        0.0f, 0.0f, -1.0f);
+
+    return new MeshData(vertices, indices);
+  }
+
+  public static MeshData createVehicleRearLights() {
+
+    float[] vertices = new float[2 * 4 * FLOATS_PER_VERTEX];
+    int[] indices = new int[2 * 6];
+    float z = REAR_FACE_Z + SURFACE_EPSILON;
+
+    appendFlatQuad(vertices, indices, 0,
+        -0.69f, 0.48f, z, -0.36f, 0.48f, z,
+        -0.34f, 0.60f, z, -0.66f, 0.60f, z,
+        0.0f, 0.0f, 1.0f);
+
+    appendFlatQuad(vertices, indices, 1,
+        0.36f, 0.48f, z, 0.69f, 0.48f, z,
+        0.66f, 0.60f, z, 0.34f, 0.60f, z,
+        0.0f, 0.0f, 1.0f);
+
+    return new MeshData(vertices, indices);
+  }
+
+  public static MeshData createVehicleRearPlate() {
+
+    float[] vertices = new float[4 * FLOATS_PER_VERTEX];
+    int[] indices = new int[6];
+    float z = REAR_FACE_Z + SURFACE_EPSILON + 0.001f;
+
+    appendFlatQuad(vertices, indices, 0,
+        -0.28f, 0.375f, z, 0.28f, 0.375f, z,
+        0.28f, 0.455f, z, -0.28f, 0.455f, z,
+        0.0f, 0.0f, 1.0f);
+
+    return new MeshData(vertices, indices);
+  }
+
+  private static void appendOffsetFlatQuad(
+      float[] vertices,
+      int[] indices,
+      int quadIndex,
+      float x0, float y0, float z0,
+      float x1, float y1, float z1,
+      float x2, float y2, float z2,
+      float x3, float y3, float z3,
+      float expectedNormalX,
+      float expectedNormalY,
+      float expectedNormalZ,
+      float offset) {
+
+    float length = (float) Math.sqrt(
+        expectedNormalX * expectedNormalX
+            + expectedNormalY * expectedNormalY
+            + expectedNormalZ * expectedNormalZ);
+    if (length <= 0.000001f) {
+      throw new IllegalArgumentException(
+          "La normal de desplazamiento no puede ser nula");
+    }
+
+    float offsetX = expectedNormalX / length * offset;
+    float offsetY = expectedNormalY / length * offset;
+    float offsetZ = expectedNormalZ / length * offset;
+
+    appendFlatQuad(vertices, indices, quadIndex,
+        x0 + offsetX, y0 + offsetY, z0 + offsetZ,
+        x1 + offsetX, y1 + offsetY, z1 + offsetZ,
+        x2 + offsetX, y2 + offsetY, z2 + offsetZ,
+        x3 + offsetX, y3 + offsetY, z3 + offsetZ,
+        expectedNormalX, expectedNormalY, expectedNormalZ);
   }
 
   private static void appendFlatQuad(

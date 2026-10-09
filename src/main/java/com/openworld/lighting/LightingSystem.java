@@ -5,6 +5,7 @@ import com.openworld.render.Material;
 import com.openworld.render.ShaderProgram;
 import com.openworld.world.City;
 import com.openworld.vehicle.Car;
+import com.openworld.vehicle.VehicleGeometry;
 
 import org.joml.Vector3f;
 
@@ -129,22 +130,11 @@ public final class LightingSystem {
    */
   private static final int[][] LAMP_CELLS = {
 
-      { 1, 1 },
       { 1, 5 },
-      { 1, 9 },
-
-      { 3, 3 },
-      { 3, 7 },
 
       { 5, 1 },
       { 5, 5 },
       { 5, 9 },
-
-      { 7, 3 },
-      { 7, 7 },
-
-      { 9, 1 },
-      { 9, 9 }
   };
 
   /*
@@ -155,22 +145,11 @@ public final class LightingSystem {
    */
   private static final int[][] LAMP_SIDES = {
 
-      { -1, -1 },
       { 1, -1 },
-      { -1, 1 },
-
-      { 1, 1 },
-      { -1, -1 },
 
       { 1, 1 },
       { -1, 1 },
-      { 1, -1 },
-
-      { -1, 1 },
-      { 1, -1 },
-
-      { -1, -1 },
-      { 1, 1 }
+      { 1, -1 }
   };
 
   private final Vector3f[] lampPositions = new Vector3f[LAMP_CELLS.length];
@@ -198,7 +177,8 @@ public final class LightingSystem {
    * Desplazamiento lateral de cada faro
    * respecto al centro del vehículo.
    */
-  private static final float HEADLIGHT_SIDE_OFFSET = 0.65f;
+  private static final float HEADLIGHT_SIDE_OFFSET =
+      VehicleGeometry.HEADLIGHT_SIDE_OFFSET;
 
   /*
    * Posición longitudinal de los faros.
@@ -206,9 +186,11 @@ public final class LightingSystem {
    * Un valor positivo representa la parte frontal
    * del vehículo.
    */
-  private static final float HEADLIGHT_FORWARD_OFFSET = 2.25f;
+  private static final float HEADLIGHT_FORWARD_OFFSET =
+      VehicleGeometry.HEADLIGHT_FORWARD_OFFSET;
 
-  private static final float HEADLIGHT_HEIGHT = 0.72f;
+  private static final float HEADLIGHT_HEIGHT =
+      VehicleGeometry.HEADLIGHT_HEIGHT;
 
   /*
    * El haz se inclina ligeramente hacia el suelo.

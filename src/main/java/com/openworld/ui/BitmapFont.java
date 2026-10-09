@@ -111,10 +111,11 @@ public final class BitmapFont {
       return 0.0f;
     }
 
-    return text.length()
-        * (CHARACTER_WIDTH
-            + CHARACTER_SPACING)
-        * pixelSize;
+    float charactersWidth = text.length()
+        * CHARACTER_WIDTH * pixelSize;
+    float spacingWidth = Math.max(0, text.length() - 1)
+        * CHARACTER_SPACING * pixelSize;
+    return charactersWidth + spacingWidth;
   }
 
   public static float getTextHeight(

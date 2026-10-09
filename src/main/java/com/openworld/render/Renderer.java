@@ -601,18 +601,28 @@ public final class Renderer {
         width, height, depth, material);
   }
 
+  public void circle(
+      float x, float y, float z,
+      float diameter,
+      float rotationY,
+      Material material) {
+
+    if (diameter <= 0.0f) {
+      return;
+    }
+
+    drawMesh(meshLibrary.getCircle(), x, y, z,
+        0.0f, rotationY, 0.0f,
+        diameter, diameter, 1.0f, material);
+  }
+
   public void vehicleBody(
       float x, float y, float z,
       float scale, float rotationY,
       Material material) {
 
-    if (scale <= 0.0f) {
-      return;
-    }
-
-    drawMesh(meshLibrary.getVehicleBody(), x, y, z,
-        0.0f, rotationY, 0.0f,
-        scale, scale, scale, material);
+    drawVehicleMesh(meshLibrary.getVehicleBody(), x, y, z,
+        scale, rotationY, material);
   }
 
   public void vehicleGlass(
@@ -623,11 +633,77 @@ public final class Renderer {
       float rotationY,
       Material material) {
 
+    drawVehicleMesh(meshLibrary.getVehicleGlass(), x, y, z,
+        scale, rotationY, material);
+  }
+
+  public void vehicleGlassTrim(
+      float x,
+      float y,
+      float z,
+      float scale,
+      float rotationY,
+      Material material) {
+
+    drawVehicleMesh(meshLibrary.getVehicleGlassTrim(), x, y, z,
+        scale, rotationY, material);
+  }
+
+  public void vehicleFrontLights(
+      float x, float y, float z,
+      float scale, float rotationY,
+      Material material) {
+
+    drawVehicleMesh(meshLibrary.getVehicleFrontLights(), x, y, z,
+        scale, rotationY, material);
+  }
+
+  public void vehicleGrille(
+      float x, float y, float z,
+      float scale, float rotationY,
+      Material material) {
+
+    drawVehicleMesh(meshLibrary.getVehicleGrille(), x, y, z,
+        scale, rotationY, material);
+  }
+
+  public void vehicleRearLights(
+      float x, float y, float z,
+      float scale, float rotationY,
+      Material material) {
+
+    drawVehicleMesh(meshLibrary.getVehicleRearLights(), x, y, z,
+        scale, rotationY, material);
+  }
+
+  public void vehicleRearPlate(
+      float x, float y, float z,
+      float scale, float rotationY,
+      Material material) {
+
+    drawVehicleMesh(meshLibrary.getVehicleRearPlate(), x, y, z,
+        scale, rotationY, material);
+  }
+
+  private void drawVehicleMesh(
+      Mesh mesh,
+      float x, float y, float z,
+      float scale, float rotationY,
+      Material material) {
+
+    if (mesh == null) {
+      throw new IllegalArgumentException(
+          "La malla del vehiculo no puede ser null");
+    }
+    if (material == null) {
+      throw new IllegalArgumentException(
+          "El material del vehiculo no puede ser null");
+    }
     if (scale <= 0.0f) {
       return;
     }
 
-    drawMesh(meshLibrary.getVehicleGlass(), x, y, z,
+    drawMesh(mesh, x, y, z,
         0.0f, rotationY, 0.0f,
         scale, scale, scale, material);
   }

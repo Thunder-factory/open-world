@@ -10,6 +10,8 @@ public final class MeshLibrary {
 
   private static final int CONE_SEGMENTS = 12;
 
+  private static final int CIRCLE_SEGMENTS = 24;
+
   private static final float WINDOW_FRAME_BORDER_RATIO = 0.12f;
 
   private final Mesh cube;
@@ -24,9 +26,21 @@ public final class MeshLibrary {
 
   private final Mesh windowFrame;
 
+  private final Mesh circle;
+
   private final Mesh vehicleBody;
 
+  private final Mesh vehicleGlassTrim;
+
   private final Mesh vehicleGlass;
+
+  private final Mesh vehicleFrontLights;
+
+  private final Mesh vehicleGrille;
+
+  private final Mesh vehicleRearLights;
+
+  private final Mesh vehicleRearPlate;
 
   public MeshLibrary() {
 
@@ -53,11 +67,29 @@ public final class MeshLibrary {
         MeshFactory.createWindowFrame(
             WINDOW_FRAME_BORDER_RATIO));
 
+    circle = new Mesh(
+        MeshFactory.createCircle(CIRCLE_SEGMENTS));
+
     vehicleBody = new Mesh(
         MeshFactory.createVehicleBody());
 
+    vehicleGlassTrim = new Mesh(
+        MeshFactory.createVehicleGlassTrim());
+
     vehicleGlass = new Mesh(
         MeshFactory.createVehicleGlass());
+
+    vehicleFrontLights = new Mesh(
+        MeshFactory.createVehicleFrontLights());
+
+    vehicleGrille = new Mesh(
+        MeshFactory.createVehicleGrille());
+
+    vehicleRearLights = new Mesh(
+        MeshFactory.createVehicleRearLights());
+
+    vehicleRearPlate = new Mesh(
+        MeshFactory.createVehicleRearPlate());
   }
 
   public Mesh getCube() {
@@ -90,9 +122,19 @@ public final class MeshLibrary {
     return windowFrame;
   }
 
+  public Mesh getCircle() {
+
+    return circle;
+  }
+
   public Mesh getVehicleBody() {
 
     return vehicleBody;
+  }
+
+  public Mesh getVehicleGlassTrim() {
+
+    return vehicleGlassTrim;
   }
 
   public Mesh getVehicleGlass() {
@@ -100,13 +142,39 @@ public final class MeshLibrary {
     return vehicleGlass;
   }
 
+  public Mesh getVehicleFrontLights() {
+
+    return vehicleFrontLights;
+  }
+
+  public Mesh getVehicleGrille() {
+
+    return vehicleGrille;
+  }
+
+  public Mesh getVehicleRearLights() {
+
+    return vehicleRearLights;
+  }
+
+  public Mesh getVehicleRearPlate() {
+
+    return vehicleRearPlate;
+  }
+
   public void cleanup() {
 
+    vehicleRearPlate.cleanup();
+    vehicleRearLights.cleanup();
+    vehicleGrille.cleanup();
+    vehicleFrontLights.cleanup();
     vehicleGlass.cleanup();
+    vehicleGlassTrim.cleanup();
     vehicleBody.cleanup();
     cone.cleanup();
     sphere.cleanup();
     cylinder.cleanup();
+    circle.cleanup();
     windowFrame.cleanup();
     quad.cleanup();
     cube.cleanup();

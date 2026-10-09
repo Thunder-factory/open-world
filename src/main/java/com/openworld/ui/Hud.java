@@ -349,7 +349,7 @@ public final class Hud {
         + lighting.getModeName();
 
     String deliveryText = "ENTREGA: "
-        + deliveryManager.getCurrentDestinationNumber()
+        + deliveryManager.getCompletedDeliveries()
         + " / "
         + deliveryManager.getTotalDestinations();
 

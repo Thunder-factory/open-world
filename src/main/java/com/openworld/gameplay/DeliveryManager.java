@@ -233,7 +233,7 @@ public final class DeliveryManager {
      */
     float verticalOffset = (float) Math.sin(
         elapsedTime * 3.0f)
-        * 0.25f;
+        * BEACON_PULSE_HEIGHT;
 
     renderer.box(
         x,

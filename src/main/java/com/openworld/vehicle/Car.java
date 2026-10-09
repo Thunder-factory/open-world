@@ -16,9 +16,11 @@ public final class Car {
   private static final float ROLLING_RESISTANCE = 4.0f;
   private static final float TURN_SPEED = (float) Math.toRadians(100.0);
   private static final float STEERING_REFERENCE_SPEED = 7.0f;
-  private static final float COLLISION_RADIUS = 1.4f;
+  private static final float COLLISION_RADIUS =
+      VehicleGeometry.PLAYER_COLLISION_RADIUS;
 
-  private static final float VISUAL_SCALE = 1.0f;
+  private static final float VISUAL_SCALE =
+      VehicleGeometry.PLAYER_VISUAL_SCALE;
     private static final Material BODY_MATERIAL =
             new Material(0.88f, 0.20f, 0.08f, 0.0f, 0.65f, 48.0f);
   private static final VehicleVisual VEHICLE_VISUAL = new VehicleVisual();

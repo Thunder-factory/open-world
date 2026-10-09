@@ -911,6 +911,15 @@ public final class LogicValidator {
     trafficLights.reset();
 
     require(
+        trafficLights.getIntersectionCount() >= 4,
+        "Se requieren varias intersecciones con semaforos");
+
+    require(
+        trafficLights.getSignalCount()
+            == trafficLights.getIntersectionCount() * 4,
+        "Cada interseccion debe contener cuatro semaforos");
+
+    require(
         "NS_GREEN".equals(
             trafficLights.getPhaseName()),
 

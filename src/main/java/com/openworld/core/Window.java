@@ -1,6 +1,7 @@
 package com.openworld.core;
 
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 
@@ -291,10 +292,12 @@ public class Window {
              * Elimina todos los callbacks asociados
              * antes de destruir la ventana.
              */
-            glfwSetFramebufferSizeCallback(
-                    handle,
-                    null
-            );
+            GLFWFramebufferSizeCallback framebufferCallback =
+                    glfwSetFramebufferSizeCallback(handle, null);
+
+            if (framebufferCallback != null) {
+                framebufferCallback.free();
+            }
 
             glfwDestroyWindow(handle);
 

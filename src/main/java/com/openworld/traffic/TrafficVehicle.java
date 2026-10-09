@@ -3,6 +3,7 @@ package com.openworld.traffic;
 import com.openworld.render.Renderer;
 import com.openworld.render.Material;
 import com.openworld.world.City;
+import com.openworld.vehicle.VehicleGeometry;
 import com.openworld.visual.VehicleVisual;
 
 public final class TrafficVehicle {
@@ -39,16 +40,11 @@ public final class TrafficVehicle {
   private static final float TURN_SPEED = (float) Math.toRadians(
       95.0);
 
-  /*
-   * La colisión utiliza una aproximación circular,
-   * igual que el vehículo controlado.
-   *
-   * El radio es ligeramente menor porque los vehículos
-   * de tráfico utilizan una geometría más compacta.
-   */
-  private static final float COLLISION_RADIUS = 1.20f;
+  private static final float COLLISION_RADIUS =
+      VehicleGeometry.TRAFFIC_COLLISION_RADIUS;
 
-  private static final float VISUAL_SCALE = 0.84f;
+  private static final float VISUAL_SCALE =
+      VehicleGeometry.TRAFFIC_VISUAL_SCALE;
 
   private static final VehicleVisual VEHICLE_VISUAL = new VehicleVisual();
 
