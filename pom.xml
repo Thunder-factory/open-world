@@ -19,6 +19,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <lwjgl.version>3.3.3</lwjgl.version>
+        <joml.version>1.10.9</joml.version>
 
         <mainClass>com.openworld.Main</mainClass>
     </properties>
@@ -70,6 +71,13 @@
             <version>${lwjgl.version}</version>
             <classifier>natives-linux</classifier>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- Libreria de matrices-->
+        <dependency>
+            <groupId>org.joml</groupId>
+            <artifactId>joml</artifactId>
+            <version>${joml.version}</version>
         </dependency>
 
     </dependencies>

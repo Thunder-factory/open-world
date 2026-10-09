@@ -12,12 +12,15 @@ import com.openworld.gameplay.DeliveryManager;
 import com.openworld.lighting.LightingSystem;
 import com.openworld.world.TrafficLightSystem;
 import com.openworld.render.Minimap;
+import com.openworld.validation.LogicValidator;
 
 import static org.lwjgl.glfw.GLFW.*;
 
 public class Game {
 
   private static final float MAX_DELTA_TIME = 0.05f;
+
+  private static final float TITLE_UPDATE_INTERVAL = 0.20f;
 
   private Window window;
   private Input input;
@@ -36,6 +39,8 @@ public class Game {
   private Minimap minimap;
 
   private double previousTime;
+
+  private float titleUpdateAccumulator;
 
   public void run() {
 
@@ -113,7 +118,24 @@ public class Game {
      */
     minimap = new Minimap();
 
+    /*
+     * Las comprobaciones se realizan después de inicializar
+     * todos los sistemas que contienen lógica verificable.
+     */
+    LogicValidator.run(
+        city,
+        car,
+        deliveryManager,
+        lighting,
+        trafficLights,
+        camera,
+        minimap);
+
+    titleUpdateAccumulator = 0.0f;
+
     previousTime = glfwGetTime();
+
+    refreshWindowTitle();
 
     System.out.println(
         "Open World iniciado correctamente");
@@ -296,6 +318,8 @@ public class Game {
      */
     camera.update(car, city);
 
+    updateWindowTitle(deltaTime);
+
     /*
      * ========================================================
      * DEBUG
@@ -417,6 +441,73 @@ public class Game {
         "Open World finalizado");
   }
 
+  /*
+   * ============================================================
+   * TÍTULO DE VENTANA
+   * ============================================================
+   */
+
+  private void updateWindowTitle(
+      float deltaTime) {
+
+    titleUpdateAccumulator += deltaTime;
+
+    if (titleUpdateAccumulator < TITLE_UPDATE_INTERVAL) {
+
+      return;
+    }
+
+    titleUpdateAccumulator = 0.0f;
+
+    refreshWindowTitle();
+  }
+
+  private void refreshWindowTitle() {
+
+    String deliveryText;
+
+    if (deliveryManager.isFinished()) {
+
+      deliveryText = deliveryManager.getTotalDestinations()
+          + "/"
+          + deliveryManager.getTotalDestinations()
+          + " COMPLETADO";
+
+    } else {
+
+      deliveryText = deliveryManager.getCompletedDeliveries()
+          + "/"
+          + deliveryManager.getTotalDestinations();
+    }
+
+    String title = String.format(
+        "Open World"
+            + " | Vel: %.1f"
+            + " | Ent: %s"
+            + " | Tiempo: %.1fs"
+            + " | %s"
+            + " | Faros: %s"
+            + " | Cam: %s"
+            + " | Mapa: %s",
+
+        car.getSpeed(),
+
+        deliveryText,
+
+        deliveryManager.getElapsedTime(),
+
+        lighting.getModeName(),
+
+        lighting.getHeadlightStateName(),
+
+        camera.getMode(),
+
+        minimap.getStateName());
+
+    window.setTitle(
+        title);
+  }
+
   private void resetGame() {
 
     /*
@@ -478,6 +569,8 @@ public class Game {
      */
 
     minimap.reset();
+
+    refreshWindowTitle();
 
     System.out.println(
         "Estado reiniciado");
