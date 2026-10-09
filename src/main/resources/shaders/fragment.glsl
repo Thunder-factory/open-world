@@ -1,6 +1,6 @@
 #version 330 core
 
-#define MAX_LAMPS 16
+#define MAX_LAMPS 32
 
 
 in vec3 vWorldPosition;
@@ -183,11 +183,18 @@ void main() {
         * uDirectionalStrength
         * directionalDiffuseFactor;
 
-    vec3 directionalHalfway =
-        normalize(directionalLightDirection + viewDirection);
-
     float directionalSpecularFactor =
-        pow(max(dot(normal, directionalHalfway), 0.0), uShininess);
+        0.0;
+
+    if (directionalDiffuseFactor > 0.0) {
+
+        vec3 directionalHalfway =
+            normalize(directionalLightDirection + viewDirection);
+
+        directionalSpecularFactor =
+            pow(max(dot(normal, directionalHalfway), 0.0),
+                uShininess);
+    }
 
     vec3 directionalSpecular =
         uDirectionalColor
@@ -251,11 +258,18 @@ void main() {
                     * distanceToLamp
                 );
 
-            vec3 lampHalfway =
-                normalize(lampDirection + viewDirection);
-
             float lampSpecularFactor =
-                pow(max(dot(normal, lampHalfway), 0.0), uShininess);
+                0.0;
+
+            if (lampDiffuseFactor > 0.0) {
+
+                vec3 lampHalfway =
+                    normalize(lampDirection + viewDirection);
+
+                lampSpecularFactor =
+                    pow(max(dot(normal, lampHalfway), 0.0),
+                        uShininess);
+            }
 
             streetSpecular +=
                 uLampColor
@@ -409,12 +423,18 @@ void main() {
                         distanceToHeadlight
                     );
 
-                vec3 headlightHalfway =
-                    normalize(fragmentToLight + viewDirection);
-
                 float headlightSpecularFactor =
-                    pow(max(dot(normal, headlightHalfway), 0.0),
-                        uShininess);
+                    0.0;
+
+                if (diffuseFactor > 0.0) {
+
+                    vec3 headlightHalfway =
+                        normalize(fragmentToLight + viewDirection);
+
+                    headlightSpecularFactor =
+                        pow(max(dot(normal, headlightHalfway), 0.0),
+                            uShininess);
+                }
 
                 headlightSpecular +=
                     uHeadlightColor

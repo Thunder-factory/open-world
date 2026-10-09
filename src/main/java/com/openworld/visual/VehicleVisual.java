@@ -9,22 +9,6 @@ public final class VehicleVisual {
     private static final float WHEEL_AXIS_ROTATION =
             (float) Math.toRadians(-90.0);
 
-    private static final float FRONT_GLASS_LOCAL_Y = 1.18f;
-    private static final float FRONT_GLASS_FORWARD = 1.04f;
-    private static final float FRONT_GLASS_WIDTH = 1.50f;
-    private static final float FRONT_GLASS_HEIGHT = 0.64f;
-    private static final float FRONT_GLASS_PITCH =
-            (float) Math.toRadians(-52.4);
-    private static final float FRONT_GLASS_YAW = (float) Math.PI;
-
-    private static final float REAR_GLASS_LOCAL_Y = 1.15f;
-    private static final float REAR_GLASS_FORWARD = -1.05f;
-    private static final float REAR_GLASS_WIDTH = 1.46f;
-    private static final float REAR_GLASS_HEIGHT = 0.66f;
-    private static final float REAR_GLASS_PITCH =
-            (float) Math.toRadians(-47.9);
-    private static final float REAR_GLASS_YAW = 0.0f;
-
     private static final Material TIRE_MATERIAL =
             new Material(0.04f, 0.04f, 0.04f, 0.0f, 0.08f, 8.0f);
     private static final Material HUB_MATERIAL =
@@ -51,35 +35,12 @@ public final class VehicleVisual {
         }
 
         renderer.vehicleBody(x, 0.0f, z, scale, angle, bodyMaterial);
+        renderer.vehicleGlass(x, 0.0f, z, scale, angle, GLASS_MATERIAL);
 
         drawWheel(renderer, x, z, angle, scale, -1.05f, 1.25f);
         drawWheel(renderer, x, z, angle, scale, 1.05f, 1.25f);
         drawWheel(renderer, x, z, angle, scale, -1.05f, -1.25f);
         drawWheel(renderer, x, z, angle, scale, 1.05f, -1.25f);
-
-        drawQuad(renderer, x, z, angle, scale,
-                0.0f, FRONT_GLASS_LOCAL_Y, FRONT_GLASS_FORWARD,
-                FRONT_GLASS_WIDTH, FRONT_GLASS_HEIGHT,
-                FRONT_GLASS_PITCH, FRONT_GLASS_YAW,
-                GLASS_MATERIAL);
-        drawQuad(renderer, x, z, angle, scale,
-                0.0f, REAR_GLASS_LOCAL_Y, REAR_GLASS_FORWARD,
-                REAR_GLASS_WIDTH, REAR_GLASS_HEIGHT,
-                REAR_GLASS_PITCH, REAR_GLASS_YAW,
-                GLASS_MATERIAL);
-
-        drawQuad(renderer, x, z, angle, scale,
-                -0.825f, 1.16f, 0.35f, 0.82f, 0.38f,
-                0.0f, (float) -Math.PI / 2.0f, GLASS_MATERIAL);
-        drawQuad(renderer, x, z, angle, scale,
-                -0.825f, 1.16f, -0.38f, 0.74f, 0.38f,
-                0.0f, (float) -Math.PI / 2.0f, GLASS_MATERIAL);
-        drawQuad(renderer, x, z, angle, scale,
-                0.825f, 1.16f, 0.35f, 0.82f, 0.38f,
-                0.0f, (float) Math.PI / 2.0f, GLASS_MATERIAL);
-        drawQuad(renderer, x, z, angle, scale,
-                0.825f, 1.16f, -0.38f, 0.74f, 0.38f,
-                0.0f, (float) Math.PI / 2.0f, GLASS_MATERIAL);
 
         drawQuad(renderer, x, z, angle, scale,
                 -0.65f, 0.70f, 2.16f, 0.34f, 0.20f,

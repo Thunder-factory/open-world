@@ -44,9 +44,16 @@ public final class LightingSystem {
    */
   private static final float LAMP_OFFSET = 5.8f;
 
-  private static final float LAMP_LIGHT_HEIGHT = 5.25f;
+  private static final float LAMP_BULB_VISUAL_HEIGHT =
+      4.62f;
 
-  private static final float LAMP_BULB_VISUAL_HEIGHT = 4.62f;
+  private static final float LAMP_LIGHT_HEIGHT =
+      LAMP_BULB_VISUAL_HEIGHT;
+
+  private static final float PARK_LAMP_LIGHT_HEIGHT =
+      3.13f;
+
+  private static final float PARK_LAMP_OFFSET = 3.75f;
 
   private static final float NIGHT_LAMP_STRENGTH = 2.6f;
 
@@ -168,6 +175,17 @@ public final class LightingSystem {
 
   private final Vector3f[] lampPositions = new Vector3f[LAMP_CELLS.length];
 
+  private static final int[][] PARK_CELLS = {
+
+      { 2, 2 },
+      { 2, 8 },
+      { 8, 2 },
+      { 8, 8 }
+  };
+
+  private final Vector3f[] parkLampPositions =
+      new Vector3f[PARK_CELLS.length * 4];
+
   /*
    * ============================================================
    * FAROS DEL VEHÍCULO
@@ -246,6 +264,9 @@ public final class LightingSystem {
     initializeStreetLamps(
         city);
 
+    initializeParkLamps(
+        city);
+
     night = false;
 
     applyDayPreset();
@@ -295,6 +316,37 @@ public final class LightingSystem {
     System.out.println(
         "Farolas: "
             + lampPositions.length);
+  }
+
+  private void initializeParkLamps(
+      City city) {
+
+    int lampIndex = 0;
+
+    for (int[] parkCell : PARK_CELLS) {
+
+      float parkX = city.getCellCenterX(
+          parkCell[1]);
+
+      float parkZ = city.getCellCenterZ(
+          parkCell[0]);
+
+      float[] offsets = {
+          -PARK_LAMP_OFFSET,
+          PARK_LAMP_OFFSET
+      };
+
+      for (float offsetX : offsets) {
+
+        for (float offsetZ : offsets) {
+
+          parkLampPositions[lampIndex++] = new Vector3f(
+              parkX + offsetX,
+              PARK_LAMP_LIGHT_HEIGHT,
+              parkZ + offsetZ);
+        }
+      }
+    }
   }
 
   /*
@@ -549,15 +601,27 @@ public final class LightingSystem {
      * Iluminación puntual de las farolas.
      */
 
+    int totalLampCount = lampPositions.length
+        + parkLampPositions.length;
+
     shader.setUniform(
         "uLampCount",
-        lampPositions.length);
+        totalLampCount);
 
     for (int i = 0; i < lampPositions.length; i++) {
 
       shader.setUniform(
           "uLampPositions[" + i + "]",
           lampPositions[i]);
+    }
+
+    for (int i = 0; i < parkLampPositions.length; i++) {
+
+      shader.setUniform(
+          "uLampPositions["
+              + (lampPositions.length + i)
+              + "]",
+          parkLampPositions[i]);
     }
 
     shader.setUniform(
@@ -737,9 +801,7 @@ public final class LightingSystem {
         0.22f,
         0.44f,
 
-        LAMP_HOUSING_MATERIAL.getRed(),
-        LAMP_HOUSING_MATERIAL.getGreen(),
-        LAMP_HOUSING_MATERIAL.getBlue());
+        LAMP_HOUSING_MATERIAL);
 
     renderer.cone(
         x + 0.55f,
@@ -824,7 +886,8 @@ public final class LightingSystem {
 
   public int getLampCount() {
 
-    return lampPositions.length;
+    return lampPositions.length
+        + parkLampPositions.length;
   }
 
   public float getClearRed() {

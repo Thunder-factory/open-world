@@ -584,6 +584,58 @@ public final class MeshFactory {
     return new MeshData(vertices, indices);
   }
 
+  public static MeshData createVehicleGlass() {
+
+    int panelCount = 6;
+    float[] vertices = new float[panelCount * 4 * FLOATS_PER_VERTEX];
+    int[] indices = new int[panelCount * 6];
+    int panel = 0;
+
+    appendFlatQuad(vertices, indices, panel++,
+        -0.84f, 0.95f, -1.33f,
+        0.84f, 0.95f, -1.33f,
+        0.72f, 1.43f, -0.72f,
+        -0.72f, 1.43f, -0.72f,
+        0.0f, 0.70f, -0.70f);
+
+    appendFlatQuad(vertices, indices, panel++,
+        -0.70f, 1.43f, 0.74f,
+        0.70f, 1.43f, 0.74f,
+        0.84f, 0.88f, 1.33f,
+        -0.84f, 0.88f, 1.33f,
+        0.0f, 0.70f, 0.70f);
+
+    appendFlatQuad(vertices, indices, panel++,
+        -0.835f, 0.92f, -0.58f,
+        -0.835f, 1.35f, -0.54f,
+        -0.815f, 1.35f, 0.00f,
+        -0.815f, 0.90f, 0.00f,
+        -1.0f, 0.0f, 0.0f);
+
+    appendFlatQuad(vertices, indices, panel++,
+        -0.815f, 0.90f, 0.05f,
+        -0.815f, 1.35f, 0.05f,
+        -0.825f, 1.34f, 0.62f,
+        -0.825f, 0.90f, 0.62f,
+        -1.0f, 0.0f, 0.0f);
+
+    appendFlatQuad(vertices, indices, panel++,
+        0.835f, 0.92f, -0.58f,
+        0.815f, 0.90f, 0.00f,
+        0.815f, 1.35f, 0.00f,
+        0.835f, 1.35f, -0.54f,
+        1.0f, 0.0f, 0.0f);
+
+    appendFlatQuad(vertices, indices, panel,
+        0.815f, 0.90f, 0.05f,
+        0.825f, 0.90f, 0.62f,
+        0.825f, 1.34f, 0.62f,
+        0.815f, 1.35f, 0.05f,
+        1.0f, 0.0f, 0.0f);
+
+    return new MeshData(vertices, indices);
+  }
+
   private static void appendFlatQuad(
       float[] vertices,
       int[] indices,
@@ -611,7 +663,7 @@ public final class MeshFactory {
 
     if (normalLength <= 0.000001f) {
       throw new IllegalStateException(
-          "La carroceria contiene una cara degenerada");
+          "La malla contiene una cara degenerada");
     }
 
     normalX /= normalLength;

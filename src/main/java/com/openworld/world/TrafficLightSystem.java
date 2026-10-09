@@ -1,5 +1,6 @@
 package com.openworld.world;
 
+import com.openworld.render.Material;
 import com.openworld.render.Renderer;
 
 public final class TrafficLightSystem {
@@ -94,13 +95,51 @@ public final class TrafficLightSystem {
 
   private static final float HEAD_DEPTH = 0.60f;
 
-  private static final float LENS_WIDTH = 0.34f;
+  private static final float LENS_WIDTH = 0.26f;
 
-  private static final float LENS_HEIGHT = 0.22f;
+  private static final float LENS_HEIGHT = 0.16f;
 
-  private static final float LENS_THICKNESS = 0.06f;
+  private static final float LENS_SURFACE_OFFSET = 0.010f;
 
-  private static final float LENS_SURFACE_OFFSET = 0.02f;
+  private static final float SIGNAL_FRAME_WIDTH = 0.44f;
+
+  private static final float SIGNAL_FRAME_HEIGHT = 0.32f;
+
+  private static final float SIGNAL_FRAME_DEPTH = 0.22f;
+
+  private static final float SIGNAL_FRAME_OFFSET = 0.010f;
+
+  private static final float VISOR_DEPTH = 0.18f;
+
+  private static final float VISOR_TOP_THICKNESS = 0.04f;
+
+  private static final float VISOR_SIDE_THICKNESS = 0.04f;
+
+  private static final float VISOR_EXTRA_WIDTH = 0.04f;
+
+  private static final float SIGNAL_FRAME_RED = 0.015f;
+
+  private static final float SIGNAL_FRAME_GREEN = 0.018f;
+
+  private static final float SIGNAL_FRAME_BLUE = 0.022f;
+
+  private static final Material RED_OFF_MATERIAL =
+      new Material(0.18f, 0.02f, 0.02f, 0.0f, 0.18f, 20.0f);
+
+  private static final Material RED_ON_MATERIAL =
+      new Material(1.00f, 0.05f, 0.02f, 1.60f, 0.45f, 48.0f);
+
+  private static final Material YELLOW_OFF_MATERIAL =
+      new Material(0.18f, 0.14f, 0.02f, 0.0f, 0.18f, 20.0f);
+
+  private static final Material YELLOW_ON_MATERIAL =
+      new Material(1.00f, 0.72f, 0.05f, 1.45f, 0.45f, 48.0f);
+
+  private static final Material GREEN_OFF_MATERIAL =
+      new Material(0.02f, 0.16f, 0.04f, 0.0f, 0.18f, 20.0f);
+
+  private static final Material GREEN_ON_MATERIAL =
+      new Material(0.08f, 0.92f, 0.16f, 1.45f, 0.45f, 48.0f);
 
   /*
    * ============================================================
@@ -389,7 +428,7 @@ public final class TrafficLightSystem {
 
     float greenY = headY - 0.52f;
 
-    drawBulb(
+    drawSignalModule(
         renderer,
         x,
         redY,
@@ -398,7 +437,7 @@ public final class TrafficLightSystem {
         activeColor == SignalColor.RED,
         facing);
 
-    drawBulb(
+    drawSignalModule(
         renderer,
         x,
         yellowY,
@@ -407,7 +446,7 @@ public final class TrafficLightSystem {
         activeColor == SignalColor.YELLOW,
         facing);
 
-    drawBulb(
+    drawSignalModule(
         renderer,
         x,
         greenY,
@@ -415,6 +454,184 @@ public final class TrafficLightSystem {
         SignalColor.GREEN,
         activeColor == SignalColor.GREEN,
         facing);
+  }
+
+  private void drawSignalModule(
+      Renderer renderer,
+      float x,
+      float y,
+      float z,
+      SignalColor color,
+      boolean active,
+      Facing facing) {
+
+    drawSignalFrame(renderer, x, y, z, facing);
+    drawSignalVisor(renderer, x, y, z, facing);
+    drawBulb(renderer, x, y, z, color, active, facing);
+  }
+
+  private void drawSignalFrame(
+      Renderer renderer,
+      float x,
+      float y,
+      float z,
+      Facing facing) {
+
+    float normalX = getFacingNormalX(facing);
+    float normalZ = getFacingNormalZ(facing);
+    float rotationY = getFacingAngle(facing);
+    float faceOffset = getFaceHalfExtent(facing);
+
+    float frameX = x + normalX * (faceOffset
+        + SIGNAL_FRAME_OFFSET
+        + SIGNAL_FRAME_DEPTH / 2.0f);
+
+    float frameZ = z + normalZ * (faceOffset
+        + SIGNAL_FRAME_OFFSET
+        + SIGNAL_FRAME_DEPTH / 2.0f);
+
+    renderer.windowFrame(
+        frameX,
+        y,
+        frameZ,
+        SIGNAL_FRAME_WIDTH,
+        SIGNAL_FRAME_HEIGHT,
+        SIGNAL_FRAME_DEPTH,
+        rotationY,
+        SIGNAL_FRAME_RED,
+        SIGNAL_FRAME_GREEN,
+        SIGNAL_FRAME_BLUE);
+  }
+
+  private void drawSignalVisor(
+      Renderer renderer,
+      float x,
+      float y,
+      float z,
+      Facing facing) {
+
+    float faceOffset = getFaceHalfExtent(facing);
+
+    switch (facing) {
+
+      case POSITIVE_Z -> {
+        float visorCenterZ = z + faceOffset
+            + SIGNAL_FRAME_OFFSET
+            + VISOR_DEPTH / 2.0f;
+
+        drawHorizontalVisor(renderer, x, y, visorCenterZ);
+      }
+
+      case NEGATIVE_Z -> {
+        float visorCenterZ = z - faceOffset
+            - SIGNAL_FRAME_OFFSET
+            - VISOR_DEPTH / 2.0f;
+
+        drawHorizontalVisor(renderer, x, y, visorCenterZ);
+      }
+
+      case POSITIVE_X -> {
+        float visorCenterX = x + faceOffset
+            + SIGNAL_FRAME_OFFSET
+            + VISOR_DEPTH / 2.0f;
+
+        drawVerticalVisor(renderer, visorCenterX, y, z);
+      }
+
+      case NEGATIVE_X -> {
+        float visorCenterX = x - faceOffset
+            - SIGNAL_FRAME_OFFSET
+            - VISOR_DEPTH / 2.0f;
+
+        drawVerticalVisor(renderer, visorCenterX, y, z);
+      }
+    }
+  }
+
+  private void drawHorizontalVisor(
+      Renderer renderer,
+      float x,
+      float y,
+      float visorCenterZ) {
+
+    renderer.box(
+        x,
+        y + SIGNAL_FRAME_HEIGHT / 2.0f
+            + VISOR_TOP_THICKNESS / 2.0f,
+        visorCenterZ,
+        SIGNAL_FRAME_WIDTH + VISOR_EXTRA_WIDTH,
+        VISOR_TOP_THICKNESS,
+        VISOR_DEPTH,
+        SIGNAL_FRAME_RED,
+        SIGNAL_FRAME_GREEN,
+        SIGNAL_FRAME_BLUE);
+
+    renderer.box(
+        x - SIGNAL_FRAME_WIDTH / 2.0f
+            - VISOR_SIDE_THICKNESS / 2.0f,
+        y,
+        visorCenterZ,
+        VISOR_SIDE_THICKNESS,
+        SIGNAL_FRAME_HEIGHT,
+        VISOR_DEPTH,
+        SIGNAL_FRAME_RED,
+        SIGNAL_FRAME_GREEN,
+        SIGNAL_FRAME_BLUE);
+
+    renderer.box(
+        x + SIGNAL_FRAME_WIDTH / 2.0f
+            + VISOR_SIDE_THICKNESS / 2.0f,
+        y,
+        visorCenterZ,
+        VISOR_SIDE_THICKNESS,
+        SIGNAL_FRAME_HEIGHT,
+        VISOR_DEPTH,
+        SIGNAL_FRAME_RED,
+        SIGNAL_FRAME_GREEN,
+        SIGNAL_FRAME_BLUE);
+  }
+
+  private void drawVerticalVisor(
+      Renderer renderer,
+      float visorCenterX,
+      float y,
+      float z) {
+
+    renderer.box(
+        visorCenterX,
+        y + SIGNAL_FRAME_HEIGHT / 2.0f
+            + VISOR_TOP_THICKNESS / 2.0f,
+        z,
+        VISOR_DEPTH,
+        VISOR_TOP_THICKNESS,
+        SIGNAL_FRAME_WIDTH + VISOR_EXTRA_WIDTH,
+        SIGNAL_FRAME_RED,
+        SIGNAL_FRAME_GREEN,
+        SIGNAL_FRAME_BLUE);
+
+    renderer.box(
+        visorCenterX,
+        y,
+        z - SIGNAL_FRAME_WIDTH / 2.0f
+            - VISOR_SIDE_THICKNESS / 2.0f,
+        VISOR_DEPTH,
+        SIGNAL_FRAME_HEIGHT,
+        VISOR_SIDE_THICKNESS,
+        SIGNAL_FRAME_RED,
+        SIGNAL_FRAME_GREEN,
+        SIGNAL_FRAME_BLUE);
+
+    renderer.box(
+        visorCenterX,
+        y,
+        z + SIGNAL_FRAME_WIDTH / 2.0f
+            + VISOR_SIDE_THICKNESS / 2.0f,
+        VISOR_DEPTH,
+        SIGNAL_FRAME_HEIGHT,
+        VISOR_SIDE_THICKNESS,
+        SIGNAL_FRAME_RED,
+        SIGNAL_FRAME_GREEN,
+        SIGNAL_FRAME_BLUE);
   }
 
   private void drawBulb(
@@ -426,200 +643,74 @@ public final class TrafficLightSystem {
       boolean active,
       Facing facing) {
 
-    float darkRed;
-    float darkGreen;
-    float darkBlue;
+    Material material = getLensMaterial(color, active);
+    float normalX = getFacingNormalX(facing);
+    float normalZ = getFacingNormalZ(facing);
+    float rotationY = getFacingAngle(facing);
+    float faceOffset = getFaceHalfExtent(facing);
 
-    float lightRed;
-    float lightGreen;
-    float lightBlue;
+    float lensX = x + normalX
+        * (faceOffset + LENS_SURFACE_OFFSET);
+    float lensZ = z + normalZ
+        * (faceOffset + LENS_SURFACE_OFFSET);
 
-    switch (color) {
+    renderer.quad(
+        lensX,
+        y,
+        lensZ,
+        LENS_WIDTH,
+        LENS_HEIGHT,
+        0.0f,
+        rotationY,
+        0.0f,
+        material);
+  }
 
-      case RED -> {
+  private Material getLensMaterial(
+      SignalColor color,
+      boolean active) {
 
-        darkRed = 0.22f;
-        darkGreen = 0.03f;
-        darkBlue = 0.03f;
+    return switch (color) {
+      case RED -> active ? RED_ON_MATERIAL : RED_OFF_MATERIAL;
+      case YELLOW -> active ? YELLOW_ON_MATERIAL : YELLOW_OFF_MATERIAL;
+      case GREEN -> active ? GREEN_ON_MATERIAL : GREEN_OFF_MATERIAL;
+    };
+  }
 
-        lightRed = 1.00f;
-        lightGreen = 0.05f;
-        lightBlue = 0.02f;
-      }
+  private float getFaceHalfExtent(Facing facing) {
 
-      case YELLOW -> {
+    return switch (facing) {
+      case POSITIVE_Z, NEGATIVE_Z -> HEAD_DEPTH / 2.0f;
+      case POSITIVE_X, NEGATIVE_X -> HEAD_WIDTH / 2.0f;
+    };
+  }
 
-        darkRed = 0.22f;
-        darkGreen = 0.18f;
-        darkBlue = 0.03f;
+  private float getFacingNormalX(Facing facing) {
 
-        lightRed = 1.00f;
-        lightGreen = 0.72f;
-        lightBlue = 0.04f;
-      }
+    return switch (facing) {
+      case POSITIVE_X -> 1.0f;
+      case NEGATIVE_X -> -1.0f;
+      default -> 0.0f;
+    };
+  }
 
-      case GREEN -> {
+  private float getFacingNormalZ(Facing facing) {
 
-        darkRed = 0.03f;
-        darkGreen = 0.20f;
-        darkBlue = 0.05f;
+    return switch (facing) {
+      case POSITIVE_Z -> 1.0f;
+      case NEGATIVE_Z -> -1.0f;
+      default -> 0.0f;
+    };
+  }
 
-        lightRed = 0.04f;
-        lightGreen = 0.90f;
-        lightBlue = 0.12f;
-      }
+  private float getFacingAngle(Facing facing) {
 
-      default ->
-        throw new IllegalStateException(
-            "Color de semáforo inválido");
-    }
-
-    /*
-     * La lámpara base permanece oscura y embutida en la carcasa.
-     * La parte emisiva se dibuja únicamente sobre una cara frontal.
-     */
-    switch (facing) {
-
-      case POSITIVE_Z -> {
-
-        float lensZ = z + HEAD_DEPTH / 2.0f + LENS_SURFACE_OFFSET;
-
-        renderer.box(
-            x,
-            y,
-            z + HEAD_DEPTH / 2.0f - 0.01f,
-
-            LENS_WIDTH,
-            LENS_HEIGHT,
-            LENS_THICKNESS,
-
-            darkRed,
-            darkGreen,
-            darkBlue);
-
-        if (active) {
-          renderer.emissiveBox(
-              x,
-              y,
-              lensZ,
-
-              LENS_WIDTH * 0.92f,
-              LENS_HEIGHT * 0.92f,
-              LENS_THICKNESS,
-
-              lightRed,
-              lightGreen,
-              lightBlue,
-
-              1.60f);
-        }
-      }
-
-      case NEGATIVE_Z -> {
-
-        float lensZ = z - HEAD_DEPTH / 2.0f - LENS_SURFACE_OFFSET;
-
-        renderer.box(
-            x,
-            y,
-            z - HEAD_DEPTH / 2.0f + 0.01f,
-
-            LENS_WIDTH,
-            LENS_HEIGHT,
-            LENS_THICKNESS,
-
-            darkRed,
-            darkGreen,
-            darkBlue);
-
-        if (active) {
-          renderer.emissiveBox(
-              x,
-              y,
-              lensZ,
-
-              LENS_WIDTH * 0.92f,
-              LENS_HEIGHT * 0.92f,
-              LENS_THICKNESS,
-
-              lightRed,
-              lightGreen,
-              lightBlue,
-
-              1.60f);
-        }
-      }
-
-      case POSITIVE_X -> {
-
-        float lensX = x + HEAD_WIDTH / 2.0f + LENS_SURFACE_OFFSET;
-
-        renderer.box(
-            x + HEAD_WIDTH / 2.0f - 0.01f,
-            y,
-            z,
-
-            LENS_THICKNESS,
-            LENS_HEIGHT,
-            LENS_WIDTH,
-
-            darkRed,
-            darkGreen,
-            darkBlue);
-
-        if (active) {
-          renderer.emissiveBox(
-              lensX,
-              y,
-              z,
-
-              LENS_THICKNESS,
-              LENS_HEIGHT * 0.92f,
-              LENS_WIDTH * 0.92f,
-
-              lightRed,
-              lightGreen,
-              lightBlue,
-
-              1.60f);
-        }
-      }
-
-      case NEGATIVE_X -> {
-
-        float lensX = x - HEAD_WIDTH / 2.0f - LENS_SURFACE_OFFSET;
-
-        renderer.box(
-            x - HEAD_WIDTH / 2.0f + 0.01f,
-            y,
-            z,
-
-            LENS_THICKNESS,
-            LENS_HEIGHT,
-            LENS_WIDTH,
-
-            darkRed,
-            darkGreen,
-            darkBlue);
-
-        if (active) {
-          renderer.emissiveBox(
-              lensX,
-              y,
-              z,
-
-              LENS_THICKNESS,
-              LENS_HEIGHT * 0.92f,
-              LENS_WIDTH * 0.92f,
-
-              lightRed,
-              lightGreen,
-              lightBlue,
-
-              1.60f);
-        }
-      }
-    }
+    return switch (facing) {
+      case POSITIVE_Z -> 0.0f;
+      case NEGATIVE_Z -> (float) Math.PI;
+      case POSITIVE_X -> (float) Math.PI / 2.0f;
+      case NEGATIVE_X -> (float) -Math.PI / 2.0f;
+    };
   }
 
   /*

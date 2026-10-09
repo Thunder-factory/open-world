@@ -65,10 +65,6 @@ public final class City {
   private static final float BUILDING_WINDOW_COLUMN_FACTOR = 0.22f;
 
   /*
-   * Pequeño desplazamiento exterior para evitar
-   * superposición con la pared.
-   */
-  /*
    * ============================================================
    * PASOS PEATONALES
    * ============================================================
@@ -180,6 +176,28 @@ public final class City {
   private static final float SIDEWALK_HEIGHT = 0.20f;
 
   private static final float PARK_HEIGHT = 0.10f;
+
+  private static final float PARK_PATH_HEIGHT = 0.055f;
+
+  private static final float PARK_PATH_WIDTH = 0.85f;
+
+  private static final float PARK_BORDER_WIDTH = 0.18f;
+
+  private static final float PARK_BORDER_HEIGHT = 0.12f;
+
+  private static final float FOUNTAIN_BASE_HEIGHT = 0.16f;
+
+  private static final float FOUNTAIN_BOWL_DIAMETER = 1.75f;
+
+  private static final float FOUNTAIN_BOWL_HEIGHT = 0.22f;
+
+  private static final float FOUNTAIN_WATER_DIAMETER = 1.28f;
+
+  private static final float FOUNTAIN_WATER_HEIGHT = 0.08f;
+
+  private static final float PARK_LAMP_OFFSET = 3.75f;
+
+  private static final float PARK_LAMP_HEIGHT = 3.25f;
 
   /*
    * ============================================================
@@ -644,6 +662,12 @@ public final class City {
         0.50f,
         0.22f);
 
+    drawParkPaths(renderer, x, z);
+
+    drawParkBorder(renderer, x, z);
+
+    drawParkFountain(renderer, x, z);
+
     drawParkDecoration(
         renderer,
         x,
@@ -655,6 +679,171 @@ public final class City {
    * DECORACIÓN DE PARQUES
    * ============================================================
    */
+
+  private void drawParkPaths(
+      Renderer renderer,
+      float parkX,
+      float parkZ) {
+
+    renderer.box(
+        parkX,
+        PARK_HEIGHT + PARK_PATH_HEIGHT / 2.0f,
+        parkZ,
+        CELL_SIZE - 0.70f,
+        PARK_PATH_HEIGHT,
+        PARK_PATH_WIDTH,
+        0.58f,
+        0.56f,
+        0.48f);
+
+    renderer.box(
+        parkX,
+        PARK_HEIGHT + PARK_PATH_HEIGHT / 2.0f,
+        parkZ,
+        PARK_PATH_WIDTH,
+        PARK_PATH_HEIGHT,
+        CELL_SIZE - 0.70f,
+        0.58f,
+        0.56f,
+        0.48f);
+  }
+
+  private void drawParkBorder(
+      Renderer renderer,
+      float parkX,
+      float parkZ) {
+
+    float edge = CELL_SIZE / 2.0f
+        - PARK_BORDER_WIDTH / 2.0f;
+
+    renderer.box(
+        parkX,
+        PARK_HEIGHT + PARK_BORDER_HEIGHT / 2.0f,
+        parkZ - edge,
+        CELL_SIZE,
+        PARK_BORDER_HEIGHT,
+        PARK_BORDER_WIDTH,
+        0.34f,
+        0.38f,
+        0.30f);
+
+    renderer.box(
+        parkX,
+        PARK_HEIGHT + PARK_BORDER_HEIGHT / 2.0f,
+        parkZ + edge,
+        CELL_SIZE,
+        PARK_BORDER_HEIGHT,
+        PARK_BORDER_WIDTH,
+        0.34f,
+        0.38f,
+        0.30f);
+
+    renderer.box(
+        parkX - edge,
+        PARK_HEIGHT + PARK_BORDER_HEIGHT / 2.0f,
+        parkZ,
+        PARK_BORDER_WIDTH,
+        PARK_BORDER_HEIGHT,
+        CELL_SIZE,
+        0.34f,
+        0.38f,
+        0.30f);
+
+    renderer.box(
+        parkX + edge,
+        PARK_HEIGHT + PARK_BORDER_HEIGHT / 2.0f,
+        parkZ,
+        PARK_BORDER_WIDTH,
+        PARK_BORDER_HEIGHT,
+        CELL_SIZE,
+        0.34f,
+        0.38f,
+        0.30f);
+  }
+
+  private void drawParkFountain(
+      Renderer renderer,
+      float parkX,
+      float parkZ) {
+
+    renderer.cylinder(
+        parkX,
+        PARK_HEIGHT + FOUNTAIN_BASE_HEIGHT / 2.0f,
+        parkZ,
+        FOUNTAIN_BOWL_DIAMETER + 0.24f,
+        FOUNTAIN_BASE_HEIGHT,
+        FOUNTAIN_BOWL_DIAMETER + 0.24f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.42f,
+        0.45f,
+        0.48f,
+        0.0f);
+
+    renderer.cylinder(
+        parkX,
+        PARK_HEIGHT + FOUNTAIN_BASE_HEIGHT
+            + FOUNTAIN_BOWL_HEIGHT / 2.0f,
+        parkZ,
+        FOUNTAIN_BOWL_DIAMETER,
+        FOUNTAIN_BOWL_HEIGHT,
+        FOUNTAIN_BOWL_DIAMETER,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.62f,
+        0.65f,
+        0.68f,
+        0.0f);
+
+    renderer.cylinder(
+        parkX,
+        PARK_HEIGHT + FOUNTAIN_BASE_HEIGHT
+            + FOUNTAIN_BOWL_HEIGHT
+            + FOUNTAIN_WATER_HEIGHT / 2.0f,
+        parkZ,
+        FOUNTAIN_WATER_DIAMETER,
+        FOUNTAIN_WATER_HEIGHT,
+        FOUNTAIN_WATER_DIAMETER,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.10f,
+        0.40f,
+        0.58f,
+        0.20f);
+
+    renderer.cylinder(
+        parkX,
+        PARK_HEIGHT + 0.72f,
+        parkZ,
+        0.18f,
+        0.80f,
+        0.18f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.48f,
+        0.51f,
+        0.54f,
+        0.0f);
+
+    renderer.sphere(
+        parkX,
+        PARK_HEIGHT + 1.18f,
+        parkZ,
+        0.34f,
+        0.22f,
+        0.34f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.12f,
+        0.52f,
+        0.72f,
+        0.25f);
+  }
 
   private void drawParkDecoration(
       Renderer renderer,
@@ -685,6 +874,15 @@ public final class City {
         parkX + 2.7f,
         parkZ + 2.7f);
 
+    drawParkLamp(renderer, parkX - PARK_LAMP_OFFSET,
+        parkZ - PARK_LAMP_OFFSET);
+    drawParkLamp(renderer, parkX + PARK_LAMP_OFFSET,
+        parkZ - PARK_LAMP_OFFSET);
+    drawParkLamp(renderer, parkX - PARK_LAMP_OFFSET,
+        parkZ + PARK_LAMP_OFFSET);
+    drawParkLamp(renderer, parkX + PARK_LAMP_OFFSET,
+        parkZ + PARK_LAMP_OFFSET);
+
     /*
      * Dos bancos quedan orientados en direcciones
      * perpendiculares para dar variedad visual.
@@ -692,13 +890,13 @@ public final class City {
 
     drawBenchAlongX(
         renderer,
-        parkX,
-        parkZ - 1.25f);
+        parkX + 2.01f, // Izq + /Dere -
+        parkZ - 3.75f); // Adelante - /Atras +
 
     drawBenchAlongZ(
         renderer,
-        parkX,
-        parkZ + 1.25f);
+        parkX - 3.65f, // Izq + /Dere -
+        parkZ + 2.20f); // Adelante/Atras
 
     /*
      * La parada queda junto al borde sur del parque.
@@ -721,6 +919,68 @@ public final class City {
         renderer,
         x,
         z);
+  }
+
+  private void drawParkLamp(
+      Renderer renderer,
+      float x,
+      float z) {
+
+    renderer.cylinder(
+        x,
+        0.22f,
+        z,
+        0.48f,
+        0.24f,
+        0.48f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.08f,
+        0.09f,
+        0.10f,
+        0.0f);
+
+    renderer.cylinder(
+        x,
+        PARK_LAMP_HEIGHT / 2.0f,
+        z,
+        0.12f,
+        PARK_LAMP_HEIGHT,
+        0.12f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.14f,
+        0.15f,
+        0.17f,
+        0.0f);
+
+    renderer.box(
+        x,
+        PARK_LAMP_HEIGHT + 0.08f,
+        z,
+        0.42f,
+        0.16f,
+        0.42f,
+        0.07f,
+        0.08f,
+        0.09f);
+
+    renderer.sphere(
+        x,
+        PARK_LAMP_HEIGHT - 0.12f,
+        z,
+        0.22f,
+        0.18f,
+        0.22f,
+        0.0f,
+        0.0f,
+        0.0f,
+        1.00f,
+        0.72f,
+        0.32f,
+        0.90f);
   }
 
   private void drawBenchAlongX(

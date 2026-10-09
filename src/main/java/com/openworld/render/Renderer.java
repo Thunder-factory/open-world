@@ -309,6 +309,23 @@ public final class Renderer {
         0.0f);
   }
 
+  public void box(
+      float x,
+      float y,
+      float z,
+      float sizeX,
+      float sizeY,
+      float sizeZ,
+      Material material) {
+
+    drawMesh(
+        meshLibrary.getCube(),
+        x, y, z,
+        0.0f, 0.0f, 0.0f,
+        sizeX, sizeY, sizeZ,
+        material);
+  }
+
   /*
    * ============================================================
    * CAJA ROTADA
@@ -594,6 +611,23 @@ public final class Renderer {
     }
 
     drawMesh(meshLibrary.getVehicleBody(), x, y, z,
+        0.0f, rotationY, 0.0f,
+        scale, scale, scale, material);
+  }
+
+  public void vehicleGlass(
+      float x,
+      float y,
+      float z,
+      float scale,
+      float rotationY,
+      Material material) {
+
+    if (scale <= 0.0f) {
+      return;
+    }
+
+    drawMesh(meshLibrary.getVehicleGlass(), x, y, z,
         0.0f, rotationY, 0.0f,
         scale, scale, scale, material);
   }

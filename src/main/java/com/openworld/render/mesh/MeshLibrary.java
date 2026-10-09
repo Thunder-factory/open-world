@@ -26,6 +26,8 @@ public final class MeshLibrary {
 
   private final Mesh vehicleBody;
 
+  private final Mesh vehicleGlass;
+
   public MeshLibrary() {
 
     cube = new Mesh(
@@ -53,6 +55,9 @@ public final class MeshLibrary {
 
     vehicleBody = new Mesh(
         MeshFactory.createVehicleBody());
+
+    vehicleGlass = new Mesh(
+        MeshFactory.createVehicleGlass());
   }
 
   public Mesh getCube() {
@@ -90,8 +95,14 @@ public final class MeshLibrary {
     return vehicleBody;
   }
 
+  public Mesh getVehicleGlass() {
+
+    return vehicleGlass;
+  }
+
   public void cleanup() {
 
+    vehicleGlass.cleanup();
     vehicleBody.cleanup();
     cone.cleanup();
     sphere.cleanup();
