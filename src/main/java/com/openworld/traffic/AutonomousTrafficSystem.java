@@ -94,6 +94,56 @@ public final class AutonomousTrafficSystem {
   };
 
   /*
+   * Mismo circuito exterior que ROUTE_1,
+   * pero recorrido en sentido contrario.
+   *
+   * Debido a la inversión del recorrido,
+   * las cuatro curvas son hacia la izquierda.
+   *
+   * El cálculo automático del carril mantiene
+   * el desplazamiento hacia la derecha respecto
+   * a la dirección de circulación.
+   */
+  private static final int[][] ROUTE_4 = {
+
+      { 9, 1 },
+      { 9, 9 },
+      { 1, 9 },
+      { 1, 1 }
+  };
+
+  /*
+   * Ruta irregular que combina calles exteriores
+   * e interiores.
+   *
+   * Contiene giros a izquierda y derecha y atraviesa
+   * diferentes sectores de la ciudad.
+   */
+  private static final int[][] ROUTE_5 = {
+
+      { 1, 5 },
+      { 1, 9 },
+
+      { 3, 9 },
+      { 3, 7 },
+
+      { 5, 7 },
+      { 5, 9 },
+
+      { 9, 9 },
+      { 9, 5 },
+
+      { 7, 5 },
+      { 7, 1 },
+
+      { 3, 1 },
+      { 3, 3 },
+
+      { 5, 3 },
+      { 5, 5 }
+  };
+
+  /*
    * Todas las rutas se agrupan para permitir
    * un tratamiento uniforme.
    */
@@ -101,7 +151,9 @@ public final class AutonomousTrafficSystem {
 
       ROUTE_1,
       ROUTE_2,
-      ROUTE_3
+      ROUTE_3,
+      ROUTE_4,
+      ROUTE_5
   };
 
   /*
@@ -114,7 +166,9 @@ public final class AutonomousTrafficSystem {
 
       7.0f,
       6.2f,
-      7.8f
+      7.8f,
+      7.0f,
+      6.6f
   };
 
   /*
@@ -154,6 +208,24 @@ public final class AutonomousTrafficSystem {
           0.58f,
           0.20f,
           0.76f
+      },
+
+      /*
+       * Rojo.
+       */
+      {
+          0.82f,
+          0.16f,
+          0.12f
+      },
+
+      /*
+       * Naranja.
+       */
+      {
+          0.92f,
+          0.42f,
+          0.08f
       }
   };
 
