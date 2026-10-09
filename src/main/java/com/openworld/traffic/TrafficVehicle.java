@@ -551,6 +551,60 @@ public final class TrafficVehicle {
 
     /*
      * ========================================================
+     * DETALLE FRONTAL
+     * ========================================================
+     *
+     * La fascia y la parrilla diferencian el frente
+     * sin modificar los elementos laterales.
+     */
+
+    drawPart(
+        renderer,
+
+        0.0f,
+        0.47f,
+        1.82f,
+
+        1.68f,
+        0.20f,
+        0.12f,
+
+        0.10f,
+        0.11f,
+        0.13f);
+
+    drawPart(
+        renderer,
+
+        0.0f,
+        0.61f,
+        1.82f,
+
+        0.68f,
+        0.16f,
+        0.06f,
+
+        0.025f,
+        0.035f,
+        0.045f);
+
+    drawPart(
+        renderer,
+
+        0.0f,
+        0.48f,
+        1.89f,
+
+        1.35f,
+        0.06f,
+        0.04f,
+
+        0.24f,
+        0.25f,
+        0.28f);
+
+    /*
+     * ========================================================
      * LUCES TRASERAS
      * ========================================================
      */
@@ -584,6 +638,60 @@ public final class TrafficVehicle {
         0.72f,
         0.02f,
         0.02f);
+
+    /*
+     * ========================================================
+     * DETALLE TRASERO
+     * ========================================================
+     *
+     * El parachoques y la placa permiten distinguir
+     * la parte posterior desde la cámara de seguimiento.
+     */
+
+    drawPart(
+        renderer,
+
+        0.0f,
+        0.46f,
+        -1.82f,
+
+        1.68f,
+        0.20f,
+        0.12f,
+
+        0.10f,
+        0.035f,
+        0.035f);
+
+    drawPart(
+        renderer,
+
+        0.0f,
+        0.61f,
+        -1.82f,
+
+        0.56f,
+        0.19f,
+        0.06f,
+
+        0.88f,
+        0.86f,
+        0.68f);
+
+    drawPart(
+        renderer,
+
+        0.0f,
+        0.48f,
+        -1.89f,
+
+        1.35f,
+        0.06f,
+        0.04f,
+
+        0.28f,
+        0.025f,
+        0.025f);
   }
 
   /*

@@ -251,6 +251,13 @@ public class Game {
 
       resetGame();
     }
+
+    if (input.wasPressed(
+        GLFW_KEY_ENTER)
+        && deliveryManager.isFinished()) {
+
+      hud.dismissCompletionPanel();
+    }
   }
 
   private void update(
@@ -319,13 +326,6 @@ public class Game {
      * ========================================================
      */
 
-    car.update(
-        deltaTime,
-        throttle,
-        steering,
-        brake,
-        city);
-
     /*
      * El tráfico autónomo utiliza el mismo deltaTime
      * que el resto de los sistemas dinámicos.
@@ -333,6 +333,14 @@ public class Game {
     autonomousTraffic.update(
         deltaTime,
         city);
+
+    car.update(
+        deltaTime,
+        throttle,
+        steering,
+        brake,
+        city,
+        autonomousTraffic);
 
     /*
      * Las fuentes de luz delanteras se actualizan

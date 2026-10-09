@@ -726,6 +726,42 @@ public final class AutonomousTrafficSystem {
     }
   }
 
+  /**
+   * Indica si una posición mantiene distancia suficiente
+   * respecto a los vehículos autónomos.
+   *
+   * @param worldX posición horizontal que se desea ocupar
+   * @param worldZ posición longitudinal que se desea ocupar
+   * @param radius radio de colisión del vehículo solicitante
+   * @return true cuando la posición no colisiona con el tráfico
+   */
+  public boolean canDrive(
+      float worldX,
+      float worldZ,
+      float radius) {
+
+    for (TrafficVehicle vehicle : vehicles) {
+
+      float deltaX = worldX
+          - vehicle.getX();
+
+      float deltaZ = worldZ
+          - vehicle.getZ();
+
+      float minimumDistance = radius
+          + vehicle.getCollisionRadius();
+
+      if (deltaX * deltaX
+          + deltaZ * deltaZ
+          < minimumDistance * minimumDistance) {
+
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /*
    * ============================================================
    * ACTUALIZACIÓN INDIVIDUAL

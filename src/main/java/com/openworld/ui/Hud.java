@@ -89,6 +89,8 @@ public final class Hud {
 
   private boolean helpVisible = false;
 
+  private boolean completionPanelVisible = true;
+
   private int previousCompletedDeliveries = 0;
 
   private float deliveryNotificationRemaining = 0.0f;
@@ -122,11 +124,18 @@ public final class Hud {
 
     helpVisible = false;
 
+    completionPanelVisible = true;
+
     previousCompletedDeliveries = 0;
 
     deliveryNotificationRemaining = 0.0f;
 
     lastCompletedDelivery = 0;
+  }
+
+  public void dismissCompletionPanel() {
+
+    completionPanelVisible = false;
   }
 
   public void update(
@@ -206,7 +215,8 @@ public final class Hud {
             scale);
       }
 
-      if (deliveryManager.isFinished()) {
+      if (deliveryManager.isFinished()
+          && completionPanelVisible) {
 
         drawCompletionPanel(
             renderer,
@@ -597,7 +607,7 @@ public final class Hud {
 
     drawCenteredText(
         renderer,
-        "R: REINICIAR",
+        "ENTER: CONTINUAR   R: REINICIAR",
         panelX + panelWidth / 2.0f,
         panelY + 190.0f * scale,
         pixelSize * 0.85f,

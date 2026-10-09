@@ -777,52 +777,130 @@ public final class City {
       float z) {
 
     /*
-     * Tronco.
+     * ========================================================
+     * RAÍCES Y TRONCO
+     * ========================================================
      */
+
     renderer.box(
         x,
-        1.15f,
+        0.18f,
         z,
 
-        0.38f,
-        2.10f,
-        0.38f,
+        0.72f,
+        0.18f,
+        0.72f,
+
+        0.22f,
+        0.12f,
+        0.05f);
+
+    renderer.box(
+        x,
+        1.10f,
+        z,
+
+        0.34f,
+        1.85f,
+        0.34f,
 
         0.34f,
         0.20f,
         0.08f);
 
-    /*
-     * Copa inferior.
-     */
-    renderer.box(
+    renderer.rotatedBox(
         x,
-        2.55f,
+        1.82f,
         z,
 
-        2.15f,
-        1.60f,
-        2.15f,
+        1.25f,
+        0.20f,
+        0.34f,
+
+        0.25f,
+        0.13f,
+        0.05f,
+
+        0.0f);
+
+    renderer.rotatedBox(
+        x,
+        1.82f,
+        z,
+
+        0.34f,
+        0.20f,
+        1.25f,
+
+        0.25f,
+        0.13f,
+        0.05f,
+
+        0.0f);
+
+    /*
+     * ========================================================
+     * COPA EN CAPAS
+     * ========================================================
+     */
+
+    renderer.rotatedBox(
+        x,
+        2.30f,
+        z,
+
+        2.25f,
+        1.15f,
+        2.25f,
+
+        0.07f,
+        0.30f,
+        0.09f,
+
+        (float) Math.toRadians(45.0));
+
+    renderer.rotatedBox(
+        x,
+        3.08f,
+        z,
+
+        1.85f,
+        1.20f,
+        1.85f,
 
         0.10f,
-        0.38f,
-        0.12f);
+        0.42f,
+        0.12f,
 
-    /*
-     * Copa superior.
-     */
-    renderer.box(
+        0.0f);
+
+    renderer.rotatedBox(
         x,
-        3.45f,
+        3.78f,
         z,
 
-        1.55f,
-        1.20f,
-        1.55f,
+        1.28f,
+        0.95f,
+        1.28f,
 
-        0.12f,
-        0.46f,
-        0.14f);
+        0.15f,
+        0.52f,
+        0.16f,
+
+        (float) Math.toRadians(45.0));
+
+    renderer.box(
+        x,
+        4.32f,
+        z,
+
+        0.70f,
+        0.48f,
+        0.70f,
+
+        0.20f,
+        0.60f,
+        0.19f);
   }
 
   private void drawBenchAlongX(

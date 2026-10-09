@@ -1,6 +1,7 @@
 package com.openworld.vehicle;
 
 import com.openworld.render.Renderer;
+import com.openworld.traffic.AutonomousTrafficSystem;
 import com.openworld.world.City;
 
 public final class Car {
@@ -130,7 +131,8 @@ public final class Car {
             float throttle,
             float steering,
             boolean brake,
-            City city
+            City city,
+            AutonomousTrafficSystem autonomousTraffic
     ) {
 
         /*
@@ -338,7 +340,12 @@ public final class Car {
                     candidateX,
                     z,
                     COLLISION_RADIUS
-            )) {
+            ) && (autonomousTraffic == null
+                    || autonomousTraffic.canDrive(
+                    candidateX,
+                    z,
+                    COLLISION_RADIUS
+            ))) {
 
                 x = candidateX;
 
@@ -357,7 +364,12 @@ public final class Car {
                     x,
                     candidateZ,
                     COLLISION_RADIUS
-            )) {
+            ) && (autonomousTraffic == null
+                    || autonomousTraffic.canDrive(
+                    x,
+                    candidateZ,
+                    COLLISION_RADIUS
+            ))) {
 
                 z = candidateZ;
 
@@ -376,6 +388,23 @@ public final class Car {
                                     * deltaTime
                     );
         }
+    }
+
+    public void update(
+            float deltaTime,
+            float throttle,
+            float steering,
+            boolean brake,
+            City city
+    ) {
+        update(
+                deltaTime,
+                throttle,
+                steering,
+                brake,
+                city,
+                null
+        );
     }
 
 
@@ -747,6 +776,38 @@ public final class Car {
         drawPart(
                 renderer,
 
+                0.0f,
+                0.70f,
+                2.25f,
+
+                1.86f,
+                0.24f,
+                0.10f,
+
+                0.06f,
+                0.07f,
+                0.08f
+        );
+
+        drawPart(
+                renderer,
+
+                0.0f,
+                0.73f,
+                2.31f,
+
+                0.48f,
+                0.12f,
+                0.04f,
+
+                0.82f,
+                0.84f,
+                0.78f
+        );
+
+        drawPart(
+                renderer,
+
                 -0.65f,
                 0.68f,
                 2.12f,
@@ -786,6 +847,22 @@ public final class Car {
         drawPart(
                 renderer,
 
+                0.0f,
+                0.78f,
+                -2.22f,
+
+                1.55f,
+                0.13f,
+                0.06f,
+
+                0.32f,
+                0.015f,
+                0.015f
+        );
+
+        drawPart(
+                renderer,
+
                 -0.65f,
                 0.65f,
                 -2.12f,
@@ -813,6 +890,70 @@ public final class Car {
                 0.75f,
                 0.02f,
                 0.02f
+        );
+
+        drawPart(
+                renderer,
+
+                0.0f,
+                0.73f,
+                -2.30f,
+
+                0.48f,
+                0.12f,
+                0.04f,
+
+                0.86f,
+                0.88f,
+                0.82f
+        );
+
+        drawPart(
+                renderer,
+
+                -0.62f,
+                1.12f,
+                -1.96f,
+
+                0.12f,
+                0.42f,
+                0.12f,
+
+                0.08f,
+                0.035f,
+                0.025f
+        );
+
+        drawPart(
+                renderer,
+
+                0.62f,
+                1.12f,
+                -1.96f,
+
+                0.12f,
+                0.42f,
+                0.12f,
+
+                0.08f,
+                0.035f,
+                0.025f
+        );
+
+        drawPart(
+                renderer,
+
+                0.0f,
+                1.34f,
+                -1.96f,
+
+                1.62f,
+                0.10f,
+                0.22f,
+
+                0.08f,
+                0.035f,
+                0.025f
         );
     }
 
