@@ -100,6 +100,33 @@ public final class BitmapFont {
     }
   }
 
+  public static float getTextWidth(
+      String text,
+      float pixelSize) {
+
+    if (text == null
+        || text.isEmpty()
+        || pixelSize <= 0.0f) {
+
+      return 0.0f;
+    }
+
+    return text.length()
+        * (CHARACTER_WIDTH
+            + CHARACTER_SPACING)
+        * pixelSize;
+  }
+
+  public static float getTextHeight(
+      float pixelSize) {
+
+    if (pixelSize <= 0.0f) {
+      return 0.0f;
+    }
+
+    return CHARACTER_HEIGHT * pixelSize;
+  }
+
   /*
    * ============================================================
    * CARÁCTER

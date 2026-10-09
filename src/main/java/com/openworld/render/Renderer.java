@@ -171,6 +171,9 @@ public final class Renderer {
 
   private final Vector3f color = new Vector3f();
 
+  private final Vector3f minimapCircle =
+      new Vector3f(-1.0f, -1.0f, -1.0f);
+
   /*
    * Matrices utilizadas exclusivamente
    * por la capa de interfaz 2D.
@@ -419,6 +422,15 @@ public final class Renderer {
         "uUnlit",
         0);
 
+    minimapCircle.set(
+        -1.0f,
+        -1.0f,
+        -1.0f);
+
+    shader.setUniform(
+        "uMinimapCircle",
+        minimapCircle);
+
     /*
      * ========================================================
      * CÁMARA
@@ -613,6 +625,10 @@ public final class Renderer {
         "uColor",
         color);
 
+    shader.setUniform(
+        "uUnlit",
+        1);
+
     /*
      * El marcador no utiliza emisión visual.
      */
@@ -628,12 +644,49 @@ public final class Renderer {
         0,
         TRIANGLE_VERTEX_COUNT);
 
+    shader.setUniform(
+        "uUnlit",
+        0);
+
     /*
      * Se restaura la malla del cubo porque el resto
      * del Renderer utiliza esa geometría.
      */
     glBindVertexArray(
         vaoId);
+  }
+
+  public void minimapMarkerBox(
+      float x,
+      float y,
+      float z,
+      float sizeX,
+      float sizeY,
+      float sizeZ,
+      float red,
+      float green,
+      float blue) {
+
+    shader.setUniform(
+        "uUnlit",
+        1);
+
+    drawBox(
+        x,
+        y,
+        z,
+        sizeX,
+        sizeY,
+        sizeZ,
+        red,
+        green,
+        blue,
+        0.0f,
+        0.0f);
+
+    shader.setUniform(
+        "uUnlit",
+        0);
   }
 
   /*
@@ -720,16 +773,8 @@ public final class Renderer {
      * al minimapa.
      */
 
-    glClearColor(
-        0.025f,
-        0.030f,
-        0.040f,
-        1.0f);
-
     glClear(
-        GL_COLOR_BUFFER_BIT
-            |
-            GL_DEPTH_BUFFER_BIT);
+        GL_DEPTH_BUFFER_BIT);
 
     shader.bind();
 
@@ -740,6 +785,15 @@ public final class Renderer {
     shader.setUniform(
         "uUnlit",
         0);
+
+    minimapCircle.set(
+        x + width / 2.0f,
+        y + height / 2.0f,
+        Math.min(width, height) / 2.0f);
+
+    shader.setUniform(
+        "uMinimapCircle",
+        minimapCircle);
 
     shader.setUniform(
         "uView",
@@ -770,6 +824,15 @@ public final class Renderer {
         0,
         framebufferWidth,
         framebufferHeight);
+
+    minimapCircle.set(
+        -1.0f,
+        -1.0f,
+        -1.0f);
+
+    shader.setUniform(
+        "uMinimapCircle",
+        minimapCircle);
 
     glDisable(
         GL_SCISSOR_TEST);
@@ -842,6 +905,15 @@ public final class Renderer {
             1.0f);
 
     shader.bind();
+
+    minimapCircle.set(
+        -1.0f,
+        -1.0f,
+        -1.0f);
+
+    shader.setUniform(
+        "uMinimapCircle",
+        minimapCircle);
 
     shader.setUniform(
         "uView",
@@ -932,6 +1004,63 @@ public final class Renderer {
      * La emisión no se utiliza porque uUnlit
      * ya permite conservar el color directamente.
      */
+    shader.setUniform(
+        "uEmissionStrength",
+        0.0f);
+
+    glDrawArrays(
+        GL_TRIANGLES,
+        0,
+        VERTEX_COUNT);
+  }
+
+  public void hudRectRotated(
+      float x,
+      float y,
+      float width,
+      float height,
+      float rotation,
+      float red,
+      float green,
+      float blue) {
+
+    if (width <= 0.0f
+        || height <= 0.0f) {
+
+      return;
+    }
+
+    float centerX = x
+        + width / 2.0f;
+
+    float centerY = y
+        + height / 2.0f;
+
+    model
+        .identity()
+        .translate(
+            centerX,
+            centerY,
+            0.0f)
+        .rotateZ(rotation)
+        .scale(
+            width,
+            height,
+            1.0f);
+
+    color.set(
+        red,
+        green,
+        blue);
+
+    shader.setUniform(
+        "uModel",
+        model);
+
+    shader.setUniform(
+        "uColor",
+        color);
+
     shader.setUniform(
         "uEmissionStrength",
         0.0f);

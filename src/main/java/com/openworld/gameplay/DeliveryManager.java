@@ -16,6 +16,16 @@ public final class DeliveryManager {
 
     private static final float MAX_DELIVERY_SPEED = 1.0f;
 
+    private static final int BEACON_RING_SEGMENTS = 12;
+
+    private static final float BEACON_HEIGHT = 2.75f;
+
+    private static final float BEACON_PULSE_HEIGHT = 0.25f;
+
+    private static final float BEACON_CORE_SIZE = 0.82f;
+
+    private static final float BEACON_RING_RADIUS = 0.78f;
+
     /*
      * Cada destino se define mediante:
      *
@@ -259,10 +269,6 @@ public final class DeliveryManager {
                 ];
 
 
-        /*
-         * Una superficie plana marca el área aproximada
-         * donde se acepta la entrega.
-         */
         renderer.box(
                 x,
                 0.075f,
@@ -291,17 +297,32 @@ public final class DeliveryManager {
 
         renderer.box(
                 x,
-                2.7f + verticalOffset,
+                BEACON_HEIGHT + verticalOffset,
                 z,
 
-                0.9f,
-                0.9f,
-                0.9f,
+                BEACON_CORE_SIZE,
+                BEACON_CORE_SIZE,
+                BEACON_CORE_SIZE,
 
                 1.0f,
                 0.85f,
                 0.15f
         );
+
+        renderer.emissiveBox(
+                x,
+                BEACON_HEIGHT + verticalOffset,
+                z,
+
+                BEACON_CORE_SIZE * 0.72f,
+                BEACON_CORE_SIZE * 0.72f,
+                BEACON_CORE_SIZE * 0.72f,
+
+                1.0f,
+                0.72f,
+                0.08f,
+
+                1.20f);
 
 
         /*
@@ -321,6 +342,62 @@ public final class DeliveryManager {
                 0.65f,
                 0.05f
         );
+
+        drawBeaconRing(
+                renderer,
+                x,
+                z,
+                verticalOffset);
+    }
+
+
+    private void drawBeaconRing(
+            Renderer renderer,
+            float centerX,
+            float centerZ,
+            float verticalOffset
+    ) {
+
+        float ringY =
+                BEACON_HEIGHT
+                        + verticalOffset;
+
+        for (int segment = 0;
+             segment < BEACON_RING_SEGMENTS;
+             segment++) {
+
+            float angle =
+                    (float) (
+                            2.0 * Math.PI
+                                    * segment
+                                    / BEACON_RING_SEGMENTS
+                    );
+
+            float segmentX =
+                    centerX
+                            + (float) Math.cos(angle)
+                            * BEACON_RING_RADIUS;
+
+            float segmentZ =
+                    centerZ
+                            + (float) Math.sin(angle)
+                            * BEACON_RING_RADIUS;
+
+            renderer.emissiveBox(
+                    segmentX,
+                    ringY,
+                    segmentZ,
+
+                    0.22f,
+                    0.08f,
+                    0.22f,
+
+                    1.0f,
+                    0.45f,
+                    0.03f,
+
+                    0.90f);
+        }
     }
 
 

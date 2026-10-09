@@ -86,6 +86,12 @@ uniform float uHeadlightOuterCutoff;
 uniform float uEmissionStrength;
 
 /*
+ * Centro y radio del recorte circular del minimapa.
+ * Un radio negativo desactiva el recorte.
+ */
+uniform vec3 uMinimapCircle;
+
+/*
  * ================================================================
  * MODO SIN ILUMINACIÓN
  * ================================================================
@@ -100,6 +106,16 @@ out vec4 fragColor;
 
 
 void main() {
+
+    if (uMinimapCircle.z > 0.0
+            &&
+        distance(
+            gl_FragCoord.xy,
+            uMinimapCircle.xy
+        ) > uMinimapCircle.z) {
+
+        discard;
+    }
 
     /*
      * Los elementos de interfaz utilizan directamente

@@ -10,6 +10,12 @@ import org.joml.Matrix4f;
 
 public final class Minimap {
 
+  public enum Mode {
+
+    NORTH_UP,
+    HEADING_UP
+  }
+
   /*
    * ============================================================
    * CONFIGURACIÓN
@@ -22,6 +28,8 @@ public final class Minimap {
 
   private static final int MAX_SIZE = 300;
 
+  private static final float MINIMAP_SIZE_RATIO = 0.23f;
+
   private static final float FRAME_THICKNESS = 3.0f;
 
   /*
@@ -30,11 +38,52 @@ public final class Minimap {
    * La escala permanece fija para que el entorno cercano
    * conserve el mismo tamaño mientras el auto se desplaza.
    */
-  private static final float VEHICLE_VIEW_RADIUS = 32.0f;
+  private static final float VEHICLE_VIEW_RADIUS_CELLS = 3.20f;
 
-  private static final float SIZE_SCALE = 0.81f;
+  private static final float VEHICLE_VIEW_RADIUS =
+      City.CELL_SIZE * VEHICLE_VIEW_RADIUS_CELLS;
 
   private static final float CAMERA_HEIGHT = 180.0f;
+
+  private static final float NEAR_PLANE = 0.10f;
+
+  private static final float FAR_PLANE_PADDING = 50.0f;
+
+  private static final int FRAME_SEGMENT_COUNT = 72;
+
+  private static final float DESTINATION_VISIBLE_RADIUS_FACTOR = 0.86f;
+
+  private static final float DESTINATION_INDICATOR_RADIUS_FACTOR = 0.92f;
+
+  private static final float MIN_DIRECTION_DISTANCE = 0.0001f;
+
+  private static final float COMPASS_EDGE_PADDING = 15.0f;
+
+  private static final float COMPASS_PIXEL_SIZE = 1.80f;
+
+  private static final float PLAYER_MARKER_HEIGHT = 0.30f;
+
+  private static final float PLAYER_MARKER_SIZE = 2.80f;
+
+  private static final float PLAYER_MARKER_RED = 1.00f;
+
+  private static final float PLAYER_MARKER_GREEN = 0.20f;
+
+  private static final float PLAYER_MARKER_BLUE = 0.08f;
+
+  private static final float DESTINATION_MARKER_HEIGHT = 0.30f;
+
+  private static final float DESTINATION_MARKER_SIZE = 2.20f;
+
+  private static final float DESTINATION_MARKER_RED = 1.00f;
+
+  private static final float DESTINATION_MARKER_GREEN = 0.08f;
+
+  private static final float DESTINATION_MARKER_BLUE = 0.68f;
+
+  private static final float DESTINATION_INDICATOR_HEIGHT = 0.60f;
+
+  private static final float DESTINATION_INDICATOR_SIZE = 2.80f;
 
   /*
    * ============================================================
@@ -53,6 +102,8 @@ public final class Minimap {
    */
 
   private boolean visible = true;
+
+  private Mode mode = Mode.HEADING_UP;
 
   /*
    * ============================================================
@@ -80,6 +131,21 @@ public final class Minimap {
     return visible
         ? "ON"
         : "OFF";
+  }
+
+  public Mode getMode() {
+
+    return mode;
+  }
+
+  public void setMode(Mode mode) {
+
+    if (mode == null) {
+      throw new IllegalArgumentException(
+          "El modo del minimapa no puede ser null");
+    }
+
+    this.mode = mode;
   }
 
   /*
@@ -139,11 +205,14 @@ public final class Minimap {
      * como referencia dinámica en sus bordes.
      */
 
-    float forwardX =
-        -(float) Math.sin(car.getAngle());
+    float upX = 0.0f;
+    float upZ = -1.0f;
 
-    float forwardZ =
-        -(float) Math.cos(car.getAngle());
+    if (mode == Mode.HEADING_UP) {
+
+      upX = -(float) Math.sin(car.getAngle());
+      upZ = -(float) Math.cos(car.getAngle());
+    }
 
     viewMatrix
         .identity()
@@ -156,9 +225,9 @@ public final class Minimap {
             0.0f,
             car.getZ(),
 
-            forwardX,
+            upX,
             0.0f,
-            forwardZ);
+            upZ);
 
     projectionMatrix
         .identity()
@@ -169,8 +238,8 @@ public final class Minimap {
             -VEHICLE_VIEW_RADIUS,
             VEHICLE_VIEW_RADIUS,
 
-            0.1f,
-            CAMERA_HEIGHT + 50.0f);
+            NEAR_PLANE,
+            CAMERA_HEIGHT + FAR_PLANE_PADDING);
 
     renderer.beginMinimap(
         viewportX,
@@ -190,7 +259,13 @@ public final class Minimap {
 
       drawDestination(
           renderer,
-          deliveryManager);
+          deliveryManager,
+          car);
+
+      drawDestinationIndicator(
+          renderer,
+          deliveryManager,
+          car);
 
       drawCar(
           renderer,
@@ -268,47 +343,39 @@ public final class Minimap {
       float y,
       float size) {
 
-    float thickness = FRAME_THICKNESS;
+    float centerX = x + size / 2.0f;
+    float centerY = y + size / 2.0f;
+    float radius = size / 2.0f - FRAME_THICKNESS / 2.0f;
+    int segmentCount = FRAME_SEGMENT_COUNT;
+    float segmentLength = (float) (
+        2.0 * Math.PI * radius / segmentCount
+            + FRAME_THICKNESS);
 
-    float frameRed = 0.20f;
-    float frameGreen = 0.72f;
-    float frameBlue = 0.90f;
+    for (int segment = 0;
+        segment < segmentCount;
+        segment++) {
 
-    renderer.hudRect(
-        x,
-        y,
-        size,
-        thickness,
-        frameRed,
-        frameGreen,
-        frameBlue);
+      float angle = (float) (
+          2.0 * Math.PI
+              * segment
+              / segmentCount);
 
-    renderer.hudRect(
-        x,
-        y + size - thickness,
-        size,
-        thickness,
-        frameRed,
-        frameGreen,
-        frameBlue);
+      float segmentCenterX = centerX
+          + (float) Math.cos(angle) * radius;
 
-    renderer.hudRect(
-        x,
-        y,
-        thickness,
-        size,
-        frameRed,
-        frameGreen,
-        frameBlue);
+      float segmentCenterY = centerY
+          + (float) Math.sin(angle) * radius;
 
-    renderer.hudRect(
-        x + size - thickness,
-        y,
-        thickness,
-        size,
-        frameRed,
-        frameGreen,
-        frameBlue);
+      renderer.hudRectRotated(
+          segmentCenterX - segmentLength / 2.0f,
+          segmentCenterY - FRAME_THICKNESS / 2.0f,
+          segmentLength,
+          FRAME_THICKNESS,
+          angle + (float) (Math.PI / 2.0),
+          0.20f,
+          0.72f,
+          0.90f);
+    }
   }
 
   private void drawCompass(
@@ -320,10 +387,16 @@ public final class Minimap {
 
     float centerX = x + size / 2.0f;
     float centerY = y + size / 2.0f;
-    float radius = size / 2.0f - 15.0f;
+    float radius = size / 2.0f
+        - COMPASS_EDGE_PADDING;
 
-    float northX = (float) Math.sin(rotationY);
-    float northY = (float) Math.cos(rotationY);
+    float northX = mode == Mode.HEADING_UP
+        ? (float) Math.sin(rotationY)
+        : 0.0f;
+
+    float northY = mode == Mode.HEADING_UP
+        ? (float) Math.cos(rotationY)
+        : 1.0f;
 
     drawCompassLabel(
         renderer,
@@ -338,9 +411,12 @@ public final class Minimap {
       float centerX,
       float centerY) {
 
-    float pixelSize = 1.8f;
-    float textWidth = 6.0f * pixelSize;
-    float textHeight = 7.0f * pixelSize;
+    float pixelSize = COMPASS_PIXEL_SIZE;
+    float textWidth = BitmapFont.getTextWidth(
+        label,
+        pixelSize);
+    float textHeight = BitmapFont.getTextHeight(
+        pixelSize);
 
     BitmapFont.drawText(
         renderer,
@@ -368,9 +444,8 @@ public final class Minimap {
         framebufferHeight);
 
     int desiredSize = Math.round(
-        (minimumDimension / 3.0f)
-            * 0.85f
-            * SIZE_SCALE);
+            minimumDimension
+                * MINIMAP_SIZE_RATIO);
 
     desiredSize = Math.max(
         MIN_SIZE,
@@ -410,16 +485,16 @@ public final class Minimap {
      */
     renderer.minimapTriangle(
         car.getX(),
-        0.30f,
+        PLAYER_MARKER_HEIGHT,
         car.getZ(),
-        // Size del tringulo del car
-        2.8f,
+
+        PLAYER_MARKER_SIZE,
 
         car.getAngle(),
 
-        1.00f,
-        0.20f,
-        0.08f);
+        PLAYER_MARKER_RED,
+        PLAYER_MARKER_GREEN,
+        PLAYER_MARKER_BLUE);
   }
 
   /*
@@ -430,25 +505,106 @@ public final class Minimap {
 
   private void drawDestination(
       Renderer renderer,
-      DeliveryManager deliveryManager) {
+      DeliveryManager deliveryManager,
+      Car car) {
+
+    if (!isDestinationVisible(
+        deliveryManager,
+        car)) {
+      return;
+    }
+
+    renderer.minimapMarkerBox(
+        deliveryManager.getCurrentDestinationX(),
+        DESTINATION_MARKER_HEIGHT,
+        deliveryManager.getCurrentDestinationZ(),
+
+        DESTINATION_MARKER_SIZE,
+        DESTINATION_MARKER_HEIGHT,
+        DESTINATION_MARKER_SIZE,
+
+        DESTINATION_MARKER_RED,
+        DESTINATION_MARKER_GREEN,
+        DESTINATION_MARKER_BLUE);
+  }
+
+  private boolean isDestinationVisible(
+      DeliveryManager deliveryManager,
+      Car car) {
+
+    if (!deliveryManager.hasActiveDestination()) {
+      return false;
+    }
+
+    float deltaX = deliveryManager.getCurrentDestinationX()
+        - car.getX();
+
+    float deltaZ = deliveryManager.getCurrentDestinationZ()
+        - car.getZ();
+
+    float distance = (float) Math.sqrt(
+        deltaX * deltaX
+            + deltaZ * deltaZ);
+
+    return distance
+        <= VEHICLE_VIEW_RADIUS
+            * DESTINATION_VISIBLE_RADIUS_FACTOR;
+  }
+
+  private void drawDestinationIndicator(
+      Renderer renderer,
+      DeliveryManager deliveryManager,
+      Car car) {
 
     if (!deliveryManager.hasActiveDestination()) {
       return;
     }
 
-    renderer.emissiveBox(
-        deliveryManager.getCurrentDestinationX(),
-        0.28f,
-        deliveryManager.getCurrentDestinationZ(),
+    float deltaX = deliveryManager.getCurrentDestinationX()
+        - car.getX();
 
-        2.20f,
-        0.30f,
-        2.20f,
+    float deltaZ = deliveryManager.getCurrentDestinationZ()
+        - car.getZ();
 
-        1.00f,
-        0.08f,
-        0.68f,
+    float distance = (float) Math.sqrt(
+        deltaX * deltaX
+            + deltaZ * deltaZ);
 
-        1.80f);
+    if (distance
+        <= VEHICLE_VIEW_RADIUS
+            * DESTINATION_VISIBLE_RADIUS_FACTOR) {
+      return;
+    }
+
+    if (distance <= MIN_DIRECTION_DISTANCE) {
+      return;
+    }
+
+    float indicatorDistance =
+        VEHICLE_VIEW_RADIUS
+            * DESTINATION_INDICATOR_RADIUS_FACTOR;
+
+    float directionX = deltaX / distance;
+    float directionZ = deltaZ / distance;
+
+    float indicatorX = car.getX()
+        + directionX * indicatorDistance;
+
+    float indicatorZ = car.getZ()
+        + directionZ * indicatorDistance;
+
+    float directionAngle = (float) Math.atan2(
+        -directionX,
+        -directionZ);
+
+    renderer.minimapTriangle(
+        indicatorX,
+        DESTINATION_INDICATOR_HEIGHT,
+        indicatorZ,
+        DESTINATION_INDICATOR_SIZE,
+        directionAngle,
+        DESTINATION_MARKER_RED,
+        DESTINATION_MARKER_GREEN,
+        DESTINATION_MARKER_BLUE);
   }
 }
