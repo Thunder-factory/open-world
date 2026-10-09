@@ -389,6 +389,86 @@ public final class Car {
             Renderer renderer
     ) {
 
+        drawPart(
+                renderer,
+
+                0.0f,
+                0.48f,
+                0.0f,
+
+                2.30f,
+                0.24f,
+                4.28f,
+
+                0.16f,
+                0.035f,
+                0.025f
+        );
+
+        drawPart(
+                renderer,
+
+                0.0f,
+                0.62f,
+                2.16f,
+
+                2.12f,
+                0.20f,
+                0.16f,
+
+                0.12f,
+                0.025f,
+                0.02f
+        );
+
+        drawPart(
+                renderer,
+
+                0.0f,
+                0.60f,
+                -2.16f,
+
+                2.12f,
+                0.20f,
+                0.16f,
+
+                0.12f,
+                0.025f,
+                0.02f
+        );
+
+        drawPart(
+                renderer,
+
+                0.0f,
+                0.91f,
+                1.25f,
+
+                1.82f,
+                0.25f,
+                1.16f,
+
+                0.78f,
+                0.10f,
+                0.045f
+        );
+
+        drawPart(
+                renderer,
+
+                0.0f,
+                0.89f,
+                -1.42f,
+
+                1.82f,
+                0.22f,
+                0.82f,
+
+                0.68f,
+                0.075f,
+                0.035f
+        );
+
         /*
          * ========================================================
          * RUEDAS
@@ -459,6 +539,11 @@ public final class Car {
                 0.04f
         );
 
+        drawWheelHub(renderer, -1.27f, 1.25f);
+        drawWheelHub(renderer, 1.27f, 1.25f);
+        drawWheelHub(renderer, -1.27f, -1.25f);
+        drawWheelHub(renderer, 1.27f, -1.25f);
+
 
         /*
          * ========================================================
@@ -501,13 +586,29 @@ public final class Car {
                 1.22f,
                 -0.35f,
 
-                1.75f,
-                0.65f,
-                2.05f,
+                1.68f,
+                0.58f,
+                1.90f,
 
-                0.95f,
-                0.48f,
-                0.12f
+                0.22f,
+                0.06f,
+                0.035f
+        );
+
+        drawPart(
+                renderer,
+
+                0.0f,
+                1.57f,
+                -0.30f,
+
+                1.56f,
+                0.12f,
+                1.78f,
+
+                0.72f,
+                0.10f,
+                0.04f
         );
 
 
@@ -535,6 +636,86 @@ public final class Car {
                 0.28f
         );
 
+        drawPart(
+                renderer,
+
+                0.0f,
+                1.28f,
+                -1.28f,
+
+                1.42f,
+                0.34f,
+                0.08f,
+
+                0.07f,
+                0.14f,
+                0.20f
+        );
+
+        drawPart(
+                renderer,
+
+                -0.86f,
+                1.31f,
+                -0.28f,
+
+                0.06f,
+                0.30f,
+                1.05f,
+
+                0.06f,
+                0.14f,
+                0.20f
+        );
+
+        drawPart(
+                renderer,
+
+                0.86f,
+                1.31f,
+                -0.28f,
+
+                0.06f,
+                0.30f,
+                1.05f,
+
+                0.06f,
+                0.14f,
+                0.20f
+        );
+
+        drawPart(
+                renderer,
+
+                -0.98f,
+                1.43f,
+                0.48f,
+
+                0.18f,
+                0.12f,
+                0.30f,
+
+                0.07f,
+                0.07f,
+                0.08f
+        );
+
+        drawPart(
+                renderer,
+
+                0.98f,
+                1.43f,
+                0.48f,
+
+                0.18f,
+                0.12f,
+                0.30f,
+
+                0.07f,
+                0.07f,
+                0.08f
+        );
+
 
         /*
          * ========================================================
@@ -546,6 +727,22 @@ public final class Car {
          * La iluminación real se calcula mediante
          * LightingSystem
          */
+
+        drawPart(
+                renderer,
+
+                0.0f,
+                0.79f,
+                2.24f,
+
+                0.86f,
+                0.18f,
+                0.05f,
+
+                0.03f,
+                0.035f,
+                0.04f
+        );
 
         drawPart(
                 renderer,
@@ -616,6 +813,30 @@ public final class Car {
                 0.75f,
                 0.02f,
                 0.02f
+        );
+    }
+
+
+    private void drawWheelHub(
+            Renderer renderer,
+            float localX,
+            float localForward
+    ) {
+
+        drawPart(
+                renderer,
+
+                localX,
+                0.30f,
+                localForward,
+
+                0.06f,
+                0.25f,
+                0.34f,
+
+                0.34f,
+                0.36f,
+                0.38f
         );
     }
 

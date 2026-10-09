@@ -48,6 +48,15 @@ public final class Camera {
     private static final float FOLLOW_TARGET_HEIGHT =
             0.8f;
 
+    private static final float FRONT_DISTANCE =
+            8.0f;
+
+    private static final float FRONT_HEIGHT =
+            3.2f;
+
+    private static final float FRONT_TARGET_HEIGHT =
+            0.9f;
+
 
     /*
      * ============================================================
@@ -80,6 +89,8 @@ public final class Camera {
 
     private Mode mode =
             Mode.FOLLOW;
+
+    private boolean frontView;
 
 
     public Camera() {
@@ -120,6 +131,13 @@ public final class Camera {
             City city
     ) {
 
+        if (frontView) {
+
+            updateFront(car);
+
+            return;
+        }
+
         switch (mode) {
 
             case FOLLOW ->
@@ -128,6 +146,41 @@ public final class Camera {
             case AERIAL ->
                     updateAerial(city);
         }
+    }
+
+
+    private void updateFront(
+            Car car
+    ) {
+
+        float angle =
+                car.getAngle();
+
+        float forwardX =
+                -(float) Math.sin(angle);
+
+        float forwardZ =
+                -(float) Math.cos(angle);
+
+        float cameraX =
+                car.getX()
+                        + forwardX
+                        * FRONT_DISTANCE;
+
+        float cameraZ =
+                car.getZ()
+                        + forwardZ
+                        * FRONT_DISTANCE;
+
+        lookAt(
+                cameraX,
+                FRONT_HEIGHT,
+                cameraZ,
+
+                car.getX(),
+                FRONT_TARGET_HEIGHT,
+                car.getZ()
+        );
     }
 
 
@@ -246,6 +299,20 @@ public final class Camera {
 
     public Mode getMode() {
         return mode;
+    }
+
+
+    public boolean isFrontView() {
+
+        return frontView;
+    }
+
+
+    public void setFrontView(
+            boolean frontView
+    ) {
+
+        this.frontView = frontView;
     }
 
 

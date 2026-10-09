@@ -1,5 +1,6 @@
 package com.openworld.ui;
 
+import com.openworld.gameplay.DeliveryManager;
 import com.openworld.lighting.LightingSystem;
 import com.openworld.render.Renderer;
 import com.openworld.vehicle.Car;
@@ -32,7 +33,7 @@ public final class Hud {
 
   private static final float BASE_PANEL_WIDTH = 280.0f;
 
-  private static final float BASE_PANEL_HEIGHT = 112.0f;
+  private static final float BASE_PANEL_HEIGHT = 144.0f;
 
   private static final float BASE_BORDER_SIZE = 2.0f;
 
@@ -49,6 +50,20 @@ public final class Hud {
   private static final float BASE_FIRST_LINE_Y = 14.0f;
 
   private static final float BASE_LINE_DISTANCE = 32.0f;
+
+  private static final float DELIVERY_NOTIFICATION_DURATION = 2.5f;
+
+  private static final float BASE_NOTIFICATION_WIDTH = 520.0f;
+
+  private static final float BASE_NOTIFICATION_HEIGHT = 72.0f;
+
+  private static final float BASE_NOTIFICATION_PIXEL_SIZE = 3.2f;
+
+  private static final float BASE_COMPLETION_WIDTH = 520.0f;
+
+  private static final float BASE_COMPLETION_HEIGHT = 230.0f;
+
+  private static final float BASE_COMPLETION_PIXEL_SIZE = 3.0f;
 
   /*
    * ============================================================
@@ -73,6 +88,12 @@ public final class Hud {
    */
 
   private boolean helpVisible = false;
+
+  private int previousCompletedDeliveries = 0;
+
+  private float deliveryNotificationRemaining = 0.0f;
+
+  private int lastCompletedDelivery = 0;
 
   /*
    * ============================================================
@@ -100,6 +121,38 @@ public final class Hud {
   public void reset() {
 
     helpVisible = false;
+
+    previousCompletedDeliveries = 0;
+
+    deliveryNotificationRemaining = 0.0f;
+
+    lastCompletedDelivery = 0;
+  }
+
+  public void update(
+      float deltaTime,
+      DeliveryManager deliveryManager) {
+
+    int completed =
+        deliveryManager.getCompletedDeliveries();
+
+    if (completed > previousCompletedDeliveries) {
+
+      lastCompletedDelivery = completed;
+
+      if (!deliveryManager.isFinished()) {
+
+        deliveryNotificationRemaining =
+            DELIVERY_NOTIFICATION_DURATION;
+      }
+    }
+
+    previousCompletedDeliveries = completed;
+
+    deliveryNotificationRemaining = Math.max(
+        0.0f,
+        deliveryNotificationRemaining
+            - Math.max(0.0f, deltaTime));
   }
 
   /*
@@ -112,6 +165,7 @@ public final class Hud {
       Renderer renderer,
       Car car,
       LightingSystem lighting,
+      DeliveryManager deliveryManager,
       int framebufferWidth,
       int framebufferHeight) {
 
@@ -138,7 +192,29 @@ public final class Hud {
           renderer,
           car,
           lighting,
+          deliveryManager,
           scale);
+
+      if (deliveryNotificationRemaining > 0.0f
+          && !deliveryManager.isFinished()) {
+
+        drawDeliveryNotification(
+            renderer,
+            deliveryManager,
+            framebufferWidth,
+            framebufferHeight,
+            scale);
+      }
+
+      if (deliveryManager.isFinished()) {
+
+        drawCompletionPanel(
+            renderer,
+            deliveryManager,
+            framebufferWidth,
+            framebufferHeight,
+            scale);
+      }
 
       /*
        * El panel de ayuda se dibuja solamente
@@ -196,6 +272,7 @@ public final class Hud {
       Renderer renderer,
       Car car,
       LightingSystem lighting,
+      DeliveryManager deliveryManager,
       float scale) {
 
     float margin = BASE_MARGIN
@@ -262,6 +339,19 @@ public final class Hud {
 
     String modeText = "MODO: "
         + lighting.getModeName();
+
+    String deliveryText = "ENTREGA: "
+        + deliveryManager.getCurrentDestinationNumber()
+        + " / "
+        + deliveryManager.getTotalDestinations();
+
+    if (deliveryManager.isFinished()) {
+
+      deliveryText = "ENTREGA: "
+          + deliveryManager.getTotalDestinations()
+          + " / "
+          + deliveryManager.getTotalDestinations();
+    }
 
     float textX = margin
         + BASE_TEXT_X
@@ -369,6 +459,211 @@ public final class Hud {
         modeRed,
         modeGreen,
         modeBlue);
+
+    BitmapFont.drawText(
+        renderer,
+        deliveryText,
+
+        textX,
+        firstLineY
+            + lineDistance
+                * 3.0f,
+
+        pixelSize,
+
+        0.35f,
+        0.82f,
+        1.00f);
+  }
+
+  private void drawDeliveryNotification(
+      Renderer renderer,
+      DeliveryManager deliveryManager,
+      int framebufferWidth,
+      int framebufferHeight,
+      float scale) {
+
+    float panelWidth = BASE_NOTIFICATION_WIDTH
+        * scale;
+
+    float panelHeight = BASE_NOTIFICATION_HEIGHT
+        * scale;
+
+    float panelX = (framebufferWidth
+        - panelWidth)
+        / 2.0f;
+
+    float panelY = framebufferHeight
+        * 0.20f;
+
+    drawPanelBackground(
+        renderer,
+        panelX,
+        panelY,
+        panelWidth,
+        panelHeight,
+        scale,
+        0.95f,
+        0.68f,
+        0.18f);
+
+    String text = "ENTREGA "
+        + lastCompletedDelivery
+        + " / "
+        + deliveryManager.getTotalDestinations()
+        + " COMPLETADA";
+
+    drawCenteredText(
+        renderer,
+        text,
+        panelX + panelWidth / 2.0f,
+        panelY + panelHeight / 2.0f,
+        BASE_NOTIFICATION_PIXEL_SIZE * scale,
+        1.00f,
+        0.88f,
+        0.32f);
+  }
+
+  private void drawCompletionPanel(
+      Renderer renderer,
+      DeliveryManager deliveryManager,
+      int framebufferWidth,
+      int framebufferHeight,
+      float scale) {
+
+    float panelWidth = BASE_COMPLETION_WIDTH
+        * scale;
+
+    float panelHeight = BASE_COMPLETION_HEIGHT
+        * scale;
+
+    float panelX = (framebufferWidth
+        - panelWidth)
+        / 2.0f;
+
+    float panelY = (framebufferHeight
+        - panelHeight)
+        / 2.0f;
+
+    drawPanelBackground(
+        renderer,
+        panelX,
+        panelY,
+        panelWidth,
+        panelHeight,
+        scale,
+        0.25f,
+        0.85f,
+        0.62f);
+
+    float pixelSize = BASE_COMPLETION_PIXEL_SIZE
+        * scale;
+
+    drawCenteredText(
+        renderer,
+        "RECORRIDO COMPLETADO",
+        panelX + panelWidth / 2.0f,
+        panelY + 40.0f * scale,
+        pixelSize,
+        0.38f,
+        1.00f,
+        0.70f);
+
+    drawCenteredText(
+        renderer,
+        "ENTREGAS: "
+            + deliveryManager.getTotalDestinations()
+            + " / "
+            + deliveryManager.getTotalDestinations(),
+        panelX + panelWidth / 2.0f,
+        panelY + 96.0f * scale,
+        pixelSize,
+        0.90f,
+        0.94f,
+        1.00f);
+
+    drawCenteredText(
+        renderer,
+        String.format(
+            Locale.ROOT,
+            "TIEMPO: %.1f S",
+            deliveryManager.getElapsedTime()),
+        panelX + panelWidth / 2.0f,
+        panelY + 132.0f * scale,
+        pixelSize,
+        0.90f,
+        0.94f,
+        1.00f);
+
+    drawCenteredText(
+        renderer,
+        "R: REINICIAR",
+        panelX + panelWidth / 2.0f,
+        panelY + 190.0f * scale,
+        pixelSize * 0.85f,
+        0.45f,
+        0.86f,
+        1.00f);
+  }
+
+  private void drawPanelBackground(
+      Renderer renderer,
+      float panelX,
+      float panelY,
+      float panelWidth,
+      float panelHeight,
+      float scale,
+      float borderRed,
+      float borderGreen,
+      float borderBlue) {
+
+    float borderSize = BASE_BORDER_SIZE * scale;
+
+    renderer.hudRect(
+        panelX,
+        panelY,
+        panelWidth,
+        panelHeight,
+        borderRed,
+        borderGreen,
+        borderBlue);
+
+    renderer.hudRect(
+        panelX + borderSize,
+        panelY + borderSize,
+        panelWidth - borderSize * 2.0f,
+        panelHeight - borderSize * 2.0f,
+        0.025f,
+        0.032f,
+        0.045f);
+  }
+
+  private void drawCenteredText(
+      Renderer renderer,
+      String text,
+      float centerX,
+      float centerY,
+      float pixelSize,
+      float red,
+      float green,
+      float blue) {
+
+    float textWidth = BitmapFont.getTextWidth(
+        text,
+        pixelSize);
+
+    float textHeight = BitmapFont.getTextHeight(
+        pixelSize);
+
+    BitmapFont.drawText(
+        renderer,
+        text,
+        centerX - textWidth / 2.0f,
+        centerY - textHeight / 2.0f,
+        pixelSize,
+        red,
+        green,
+        blue);
   }
 
   /*

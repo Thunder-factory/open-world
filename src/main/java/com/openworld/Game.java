@@ -343,12 +343,19 @@ public class Game {
 
     deliveryManager.update(deltaTime, car);
 
+    hud.update(
+        deltaTime,
+        deliveryManager);
+
     /*
      * El ciclo de los semáforos utiliza
      * el tiempo transcurrido entre frames.
      */
     trafficLights.update(
         deltaTime);
+
+    camera.setFrontView(
+        input.isDown(GLFW_KEY_Q));
 
     /**
      * La camara se actualiza despues del automovil
@@ -464,6 +471,7 @@ public class Game {
         renderer,
         car,
         lighting,
+        deliveryManager,
 
         window.getFramebufferWidth(),
         window.getFramebufferHeight());
