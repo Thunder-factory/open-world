@@ -1,6 +1,7 @@
 package com.openworld.lighting;
 
 import com.openworld.render.Renderer;
+import com.openworld.render.Material;
 import com.openworld.render.ShaderProgram;
 import com.openworld.world.City;
 import com.openworld.vehicle.Car;
@@ -45,6 +46,8 @@ public final class LightingSystem {
 
   private static final float LAMP_LIGHT_HEIGHT = 5.25f;
 
+  private static final float LAMP_BULB_VISUAL_HEIGHT = 4.62f;
+
   private static final float NIGHT_LAMP_STRENGTH = 2.6f;
 
   /*
@@ -63,6 +66,51 @@ public final class LightingSystem {
       1.00f,
       0.72f,
       0.32f);
+
+  private static final Material LAMP_BASE_MATERIAL =
+      new Material(
+          0.08f,
+          0.09f,
+          0.10f,
+          0.0f,
+          0.35f,
+          28.0f);
+
+  private static final Material LAMP_METAL_MATERIAL =
+      new Material(
+          0.16f,
+          0.18f,
+          0.20f,
+          0.0f,
+          0.55f,
+          48.0f);
+
+  private static final Material LAMP_HOUSING_MATERIAL =
+      new Material(
+          0.05f,
+          0.06f,
+          0.07f,
+          0.0f,
+          0.30f,
+          24.0f);
+
+  private static final Material LAMP_DAY_GLOW_MATERIAL =
+      new Material(
+          1.00f,
+          0.72f,
+          0.32f,
+          0.15f,
+          0.45f,
+          32.0f);
+
+  private static final Material LAMP_NIGHT_GLOW_MATERIAL =
+      new Material(
+          1.00f,
+          0.72f,
+          0.32f,
+          1.80f,
+          0.65f,
+          32.0f);
 
   /*
    * Las farolas se distribuyen en diferentes
@@ -620,78 +668,110 @@ public final class LightingSystem {
 
     float z = lightPosition.z;
 
-    /*
-     * Base.
-     */
-
-    renderer.box(
+    renderer.cylinder(
         x,
-        0.32f,
+        0.20f,
         z,
 
-        0.55f,
-        0.24f,
-        0.55f,
+        0.72f,
+        0.28f,
+        0.72f,
 
-        0.18f,
-        0.19f,
-        0.20f);
+        0.0f,
+        0.0f,
+        0.0f,
 
-    /*
-     * Poste.
-     */
+        LAMP_BASE_MATERIAL);
 
-    renderer.box(
+    renderer.cylinder(
         x,
-        2.55f,
+        2.58f,
         z,
-
-        0.18f,
-        5.0f,
-        0.18f,
-
-        0.22f,
-        0.23f,
-        0.24f);
-
-    /*
-     * Soporte superior.
-     */
-
-    renderer.box(
-        x,
-        5.03f,
-        z,
-
-        0.60f,
-        0.12f,
-        0.60f,
 
         0.20f,
-        0.21f,
-        0.22f);
+        4.76f,
+        0.20f,
 
-    /*
-     * La bombilla utiliza emisión visual independiente
-     * de la iluminación puntual aplicada al entorno.
-     */
+        0.0f,
+        0.0f,
+        0.0f,
 
-    renderer.emissiveBox(
+        LAMP_METAL_MATERIAL);
+
+    renderer.cylinder(
         x,
-        LAMP_LIGHT_HEIGHT,
+        4.94f,
         z,
 
-        0.42f,
-        0.30f,
-        0.42f,
+        0.32f,
+        0.16f,
+        0.32f,
 
-        lampColor.x,
-        lampColor.y,
-        lampColor.z,
+        0.0f,
+        0.0f,
+        0.0f,
+
+        LAMP_METAL_MATERIAL);
+
+    renderer.cylinder(
+        x + 0.28f,
+        5.08f,
+        z,
+
+        0.12f,
+        0.64f,
+        0.12f,
+
+        0.0f,
+        0.0f,
+        (float) Math.toRadians(90.0),
+
+        LAMP_METAL_MATERIAL);
+
+    renderer.box(
+        x + 0.55f,
+        5.02f,
+        z,
+
+        0.58f,
+        0.22f,
+        0.44f,
+
+        LAMP_HOUSING_MATERIAL.getRed(),
+        LAMP_HOUSING_MATERIAL.getGreen(),
+        LAMP_HOUSING_MATERIAL.getBlue());
+
+    renderer.cone(
+        x + 0.55f,
+        4.82f,
+        z,
+
+        0.58f,
+        0.30f,
+        0.44f,
+
+        0.0f,
+        0.0f,
+        0.0f,
+
+        LAMP_HOUSING_MATERIAL);
+
+    renderer.sphere(
+        x + 0.55f,
+        LAMP_BULB_VISUAL_HEIGHT,
+        z,
+
+        0.28f,
+        0.20f,
+        0.28f,
+
+        0.0f,
+        0.0f,
+        0.0f,
 
         night
-            ? 1.8f
-            : 0.15f);
+            ? LAMP_NIGHT_GLOW_MATERIAL
+            : LAMP_DAY_GLOW_MATERIAL);
   }
 
   /*

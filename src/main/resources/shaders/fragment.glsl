@@ -9,6 +9,12 @@ in vec3 vNormal;
 
 uniform vec3 uColor;
 
+uniform float uSpecularStrength;
+
+uniform float uShininess;
+
+uniform vec3 uViewPosition;
+
 
 /*
  * ================================================================
@@ -135,6 +141,9 @@ void main() {
     vec3 normal =
         normalize(vNormal);
 
+    vec3 viewDirection =
+        normalize(uViewPosition - vWorldPosition);
+
 
     /*
      * ============================================================
@@ -174,6 +183,18 @@ void main() {
         * uDirectionalStrength
         * directionalDiffuseFactor;
 
+    vec3 directionalHalfway =
+        normalize(directionalLightDirection + viewDirection);
+
+    float directionalSpecularFactor =
+        pow(max(dot(normal, directionalHalfway), 0.0), uShininess);
+
+    vec3 directionalSpecular =
+        uDirectionalColor
+        * uDirectionalStrength
+        * uSpecularStrength
+        * directionalSpecularFactor;
+
 
     /*
      * ============================================================
@@ -182,6 +203,9 @@ void main() {
      */
 
     vec3 streetLighting =
+        vec3(0.0);
+
+    vec3 streetSpecular =
         vec3(0.0);
 
 
@@ -227,6 +251,19 @@ void main() {
                     * distanceToLamp
                 );
 
+            vec3 lampHalfway =
+                normalize(lampDirection + viewDirection);
+
+            float lampSpecularFactor =
+                pow(max(dot(normal, lampHalfway), 0.0), uShininess);
+
+            streetSpecular +=
+                uLampColor
+                * uLampStrength
+                * uSpecularStrength
+                * lampSpecularFactor
+                * attenuation;
+
 
             streetLighting +=
                 uLampColor
@@ -244,6 +281,9 @@ void main() {
     */
 
     vec3 headlightLighting =
+        vec3(0.0);
+
+    vec3 headlightSpecular =
         vec3(0.0);
 
 
@@ -369,6 +409,22 @@ void main() {
                         distanceToHeadlight
                     );
 
+                vec3 headlightHalfway =
+                    normalize(fragmentToLight + viewDirection);
+
+                float headlightSpecularFactor =
+                    pow(max(dot(normal, headlightHalfway), 0.0),
+                        uShininess);
+
+                headlightSpecular +=
+                    uHeadlightColor
+                    * uHeadlightStrength
+                    * uSpecularStrength
+                    * headlightSpecularFactor
+                    * attenuation
+                    * coneIntensity
+                    * rangeFade;
+
 
                 headlightLighting +=
                     uHeadlightColor
@@ -403,7 +459,10 @@ void main() {
 
     vec3 finalColor =
         uColor
-        * lighting;
+        * lighting
+        + directionalSpecular
+        + streetSpecular
+        + headlightSpecular;
 
 
     /*

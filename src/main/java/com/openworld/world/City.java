@@ -1,6 +1,8 @@
 package com.openworld.world;
 
 import com.openworld.render.Renderer;
+import com.openworld.visual.BuildingWindowVisual;
+import com.openworld.visual.TreeVisual;
 
 public final class City {
 
@@ -40,8 +42,6 @@ public final class City {
 
   private static final float BUILDING_WINDOW_HEIGHT = 0.65f;
 
-  private static final float BUILDING_WINDOW_THICKNESS = 0.04f;
-
   /*
    * Separación vertical aproximada entre filas.
    *
@@ -68,8 +68,6 @@ public final class City {
    * Pequeño desplazamiento exterior para evitar
    * superposición con la pared.
    */
-  private static final float BUILDING_WINDOW_FACE_OFFSET = 0.025f;
-
   /*
    * ============================================================
    * PASOS PEATONALES
@@ -203,6 +201,10 @@ public final class City {
   private static final float BUS_STOP_DEPTH = 0.65f;
 
   private static final float BUS_STOP_HEIGHT = 2.35f;
+
+  private final BuildingWindowVisual buildingWindowVisual = new BuildingWindowVisual();
+
+  private final TreeVisual treeVisual = new TreeVisual();
 
   public City() {
 
@@ -495,37 +497,12 @@ public final class City {
 
     /*
      * ============================================================
-     * COLOR
-     * ============================================================
-     */
-
-    float red = night
-        ? 1.00f
-        : 0.12f;
-
-    float green = night
-        ? 0.78f
-        : 0.18f;
-
-    float blue = night
-        ? 0.32f
-        : 0.24f;
-
-    float emission = night
-        ? 1.25f
-        : 0.0f;
-
-    /*
-     * ============================================================
      * POSICIÓN DE FACHADAS
      * ============================================================
      */
 
     float halfBuilding = buildingSize
         / 2.0f;
-
-    float faceOffset = halfBuilding
-        + BUILDING_WINDOW_FACE_OFFSET;
 
     /*
      * ============================================================
@@ -576,24 +553,15 @@ public final class City {
          * ====================================================
          */
 
-        renderer.emissiveBox(
-            buildingX
-                + lateralOffset,
-
+        buildingWindowVisual.render(
+            renderer,
+            buildingX + lateralOffset,
             windowY,
-
-            buildingZ
-                - faceOffset,
-
+            buildingZ - halfBuilding,
+            (float) Math.PI,
             BUILDING_WINDOW_WIDTH,
             BUILDING_WINDOW_HEIGHT,
-            BUILDING_WINDOW_THICKNESS,
-
-            red,
-            green,
-            blue,
-
-            emission);
+            night);
 
         /*
          * ====================================================
@@ -601,24 +569,15 @@ public final class City {
          * ====================================================
          */
 
-        renderer.emissiveBox(
-            buildingX
-                + lateralOffset,
-
+        buildingWindowVisual.render(
+            renderer,
+            buildingX + lateralOffset,
             windowY,
-
-            buildingZ
-                + faceOffset,
-
+            buildingZ + halfBuilding,
+            0.0f,
             BUILDING_WINDOW_WIDTH,
             BUILDING_WINDOW_HEIGHT,
-            BUILDING_WINDOW_THICKNESS,
-
-            red,
-            green,
-            blue,
-
-            emission);
+            night);
 
         /*
          * ====================================================
@@ -626,24 +585,15 @@ public final class City {
          * ====================================================
          */
 
-        renderer.emissiveBox(
-            buildingX
-                - faceOffset,
-
+        buildingWindowVisual.render(
+            renderer,
+            buildingX - halfBuilding,
             windowY,
-
-            buildingZ
-                + lateralOffset,
-
-            BUILDING_WINDOW_THICKNESS,
-            BUILDING_WINDOW_HEIGHT,
+            buildingZ + lateralOffset,
+            (float) (-Math.PI / 2.0),
             BUILDING_WINDOW_WIDTH,
-
-            red,
-            green,
-            blue,
-
-            emission);
+            BUILDING_WINDOW_HEIGHT,
+            night);
 
         /*
          * ====================================================
@@ -651,24 +601,15 @@ public final class City {
          * ====================================================
          */
 
-        renderer.emissiveBox(
-            buildingX
-                + faceOffset,
-
+        buildingWindowVisual.render(
+            renderer,
+            buildingX + halfBuilding,
             windowY,
-
-            buildingZ
-                + lateralOffset,
-
-            BUILDING_WINDOW_THICKNESS,
-            BUILDING_WINDOW_HEIGHT,
+            buildingZ + lateralOffset,
+            (float) (Math.PI / 2.0),
             BUILDING_WINDOW_WIDTH,
-
-            red,
-            green,
-            blue,
-
-            emission);
+            BUILDING_WINDOW_HEIGHT,
+            night);
       }
     }
   }
@@ -776,131 +717,10 @@ public final class City {
       float x,
       float z) {
 
-    /*
-     * ========================================================
-     * RAÍCES Y TRONCO
-     * ========================================================
-     */
-
-    renderer.box(
+    treeVisual.render(
+        renderer,
         x,
-        0.18f,
-        z,
-
-        0.72f,
-        0.18f,
-        0.72f,
-
-        0.22f,
-        0.12f,
-        0.05f);
-
-    renderer.box(
-        x,
-        1.10f,
-        z,
-
-        0.34f,
-        1.85f,
-        0.34f,
-
-        0.34f,
-        0.20f,
-        0.08f);
-
-    renderer.rotatedBox(
-        x,
-        1.82f,
-        z,
-
-        1.25f,
-        0.20f,
-        0.34f,
-
-        0.25f,
-        0.13f,
-        0.05f,
-
-        0.0f);
-
-    renderer.rotatedBox(
-        x,
-        1.82f,
-        z,
-
-        0.34f,
-        0.20f,
-        1.25f,
-
-        0.25f,
-        0.13f,
-        0.05f,
-
-        0.0f);
-
-    /*
-     * ========================================================
-     * COPA EN CAPAS
-     * ========================================================
-     */
-
-    renderer.rotatedBox(
-        x,
-        2.30f,
-        z,
-
-        2.25f,
-        1.15f,
-        2.25f,
-
-        0.07f,
-        0.30f,
-        0.09f,
-
-        (float) Math.toRadians(45.0));
-
-    renderer.rotatedBox(
-        x,
-        3.08f,
-        z,
-
-        1.85f,
-        1.20f,
-        1.85f,
-
-        0.10f,
-        0.42f,
-        0.12f,
-
-        0.0f);
-
-    renderer.rotatedBox(
-        x,
-        3.78f,
-        z,
-
-        1.28f,
-        0.95f,
-        1.28f,
-
-        0.15f,
-        0.52f,
-        0.16f,
-
-        (float) Math.toRadians(45.0));
-
-    renderer.box(
-        x,
-        4.32f,
-        z,
-
-        0.70f,
-        0.48f,
-        0.70f,
-
-        0.20f,
-        0.60f,
-        0.19f);
+        z);
   }
 
   private void drawBenchAlongX(
@@ -1492,9 +1312,7 @@ public final class City {
          */
         if (horizontal) {
 
-          for (int segment = -1;
-              segment <= 1;
-              segment++) {
+          for (int segment = -1; segment <= 1; segment++) {
 
             renderer.box(
                 x
@@ -1520,9 +1338,7 @@ public final class City {
          */
         if (vertical) {
 
-          for (int segment = -1;
-              segment <= 1;
-              segment++) {
+          for (int segment = -1; segment <= 1; segment++) {
 
             renderer.box(
                 x,

@@ -1,7 +1,9 @@
 package com.openworld.traffic;
 
 import com.openworld.render.Renderer;
+import com.openworld.render.Material;
 import com.openworld.world.City;
+import com.openworld.visual.VehicleVisual;
 
 public final class TrafficVehicle {
 
@@ -46,6 +48,10 @@ public final class TrafficVehicle {
    */
   private static final float COLLISION_RADIUS = 1.20f;
 
+  private static final float VISUAL_SCALE = 0.84f;
+
+  private static final VehicleVisual VEHICLE_VISUAL = new VehicleVisual();
+
   /*
    * ============================================================
    * ESTADO INICIAL
@@ -72,11 +78,7 @@ public final class TrafficVehicle {
    * ============================================================
    */
 
-  private final float bodyRed;
-
-  private final float bodyGreen;
-
-  private final float bodyBlue;
+  private final Material bodyMaterial;
 
   /*
    * ============================================================
@@ -140,20 +142,28 @@ public final class TrafficVehicle {
         0.0f,
         MAX_FORWARD_SPEED);
 
-    this.bodyRed = clamp(
+    float safeRed = clamp(
         bodyRed,
         0.0f,
         1.0f);
 
-    this.bodyGreen = clamp(
+    float safeGreen = clamp(
         bodyGreen,
         0.0f,
         1.0f);
 
-    this.bodyBlue = clamp(
+    float safeBlue = clamp(
         bodyBlue,
         0.0f,
         1.0f);
+
+    bodyMaterial = new Material(
+        safeRed,
+        safeGreen,
+        safeBlue,
+        0.0f,
+        0.58f,
+        44.0f);
 
     reset();
   }
@@ -173,8 +183,8 @@ public final class TrafficVehicle {
    * desiredSpeed representa la velocidad que se desea
    * alcanzar durante el frame actual.
    *
-   * La selección de esos valores corresponderá al sistema
-   * de rutas que se incorporará posteriormente.
+   * Los valores son proporcionados por
+   * AutonomousTrafficSystem según la ruta activa.
    */
   public void update(
       float deltaTime,
@@ -366,397 +376,13 @@ public final class TrafficVehicle {
 
   public void render(
       Renderer renderer) {
-
-    /*
-     * ========================================================
-     * RUEDAS
-     * ========================================================
-     */
-
-    drawPart(
+    VEHICLE_VISUAL.render(
         renderer,
-
-        -0.88f,
-        0.27f,
-        1.00f,
-
-        0.32f,
-        0.42f,
-        0.62f,
-
-        0.035f,
-        0.035f,
-        0.035f);
-
-    drawPart(
-        renderer,
-
-        0.88f,
-        0.27f,
-        1.00f,
-
-        0.32f,
-        0.42f,
-        0.62f,
-
-        0.035f,
-        0.035f,
-        0.035f);
-
-    drawPart(
-        renderer,
-
-        -0.88f,
-        0.27f,
-        -1.00f,
-
-        0.32f,
-        0.42f,
-        0.62f,
-
-        0.035f,
-        0.035f,
-        0.035f);
-
-    drawPart(
-        renderer,
-
-        0.88f,
-        0.27f,
-        -1.00f,
-
-        0.32f,
-        0.42f,
-        0.62f,
-
-        0.035f,
-        0.035f,
-        0.035f);
-
-    /*
-     * ========================================================
-     * CHASIS
-     * ========================================================
-     */
-
-    drawPart(
-        renderer,
-
-        0.0f,
-        0.56f,
-        0.0f,
-
-        1.85f,
-        0.60f,
-        3.50f,
-
-        bodyRed,
-        bodyGreen,
-        bodyBlue);
-
-    /*
-     * ========================================================
-     * CABINA
-     * ========================================================
-     */
-
-    float cabinRed = clamp(
-        bodyRed * 1.12f,
-        0.0f,
-        1.0f);
-
-    float cabinGreen = clamp(
-        bodyGreen * 1.12f,
-        0.0f,
-        1.0f);
-
-    float cabinBlue = clamp(
-        bodyBlue * 1.12f,
-        0.0f,
-        1.0f);
-
-    drawPart(
-        renderer,
-
-        0.0f,
-        1.08f,
-        -0.18f,
-
-        1.48f,
-        0.58f,
-        1.65f,
-
-        cabinRed,
-        cabinGreen,
-        cabinBlue);
-
-    /*
-     * ========================================================
-     * PARABRISAS DELANTERO
-     * ========================================================
-     */
-
-    drawPart(
-        renderer,
-
-        0.0f,
-        1.13f,
-        0.68f,
-
-        1.25f,
-        0.35f,
-        0.07f,
-
-        0.08f,
-        0.16f,
-        0.23f);
-
-    /*
-     * ========================================================
-     * LUCES DELANTERAS VISUALES
-     * ========================================================
-     *
-     * Estas piezas no actúan como fuentes de iluminación.
-     */
-
-    drawPart(
-        renderer,
-
-        -0.52f,
-        0.60f,
-        1.77f,
-
-        0.28f,
-        0.18f,
-        0.07f,
-
-        0.95f,
-        0.90f,
-        0.50f);
-
-    drawPart(
-        renderer,
-
-        0.52f,
-        0.60f,
-        1.77f,
-
-        0.28f,
-        0.18f,
-        0.07f,
-
-        0.95f,
-        0.90f,
-        0.50f);
-
-    /*
-     * ========================================================
-     * DETALLE FRONTAL
-     * ========================================================
-     *
-     * La fascia y la parrilla diferencian el frente
-     * sin modificar los elementos laterales.
-     */
-
-    drawPart(
-        renderer,
-
-        0.0f,
-        0.47f,
-        1.82f,
-
-        1.68f,
-        0.20f,
-        0.12f,
-
-        0.10f,
-        0.11f,
-        0.13f);
-
-    drawPart(
-        renderer,
-
-        0.0f,
-        0.61f,
-        1.82f,
-
-        0.68f,
-        0.16f,
-        0.06f,
-
-        0.025f,
-        0.035f,
-        0.045f);
-
-    drawPart(
-        renderer,
-
-        0.0f,
-        0.48f,
-        1.89f,
-
-        1.35f,
-        0.06f,
-        0.04f,
-
-        0.24f,
-        0.25f,
-        0.28f);
-
-    /*
-     * ========================================================
-     * LUCES TRASERAS
-     * ========================================================
-     */
-
-    drawPart(
-        renderer,
-
-        -0.52f,
-        0.57f,
-        -1.77f,
-
-        0.25f,
-        0.17f,
-        0.07f,
-
-        0.72f,
-        0.02f,
-        0.02f);
-
-    drawPart(
-        renderer,
-
-        0.52f,
-        0.57f,
-        -1.77f,
-
-        0.25f,
-        0.17f,
-        0.07f,
-
-        0.72f,
-        0.02f,
-        0.02f);
-
-    /*
-     * ========================================================
-     * DETALLE TRASERO
-     * ========================================================
-     *
-     * El parachoques y la placa permiten distinguir
-     * la parte posterior desde la cámara de seguimiento.
-     */
-
-    drawPart(
-        renderer,
-
-        0.0f,
-        0.46f,
-        -1.82f,
-
-        1.68f,
-        0.20f,
-        0.12f,
-
-        0.10f,
-        0.035f,
-        0.035f);
-
-    drawPart(
-        renderer,
-
-        0.0f,
-        0.61f,
-        -1.82f,
-
-        0.56f,
-        0.19f,
-        0.06f,
-
-        0.88f,
-        0.86f,
-        0.68f);
-
-    drawPart(
-        renderer,
-
-        0.0f,
-        0.48f,
-        -1.89f,
-
-        1.35f,
-        0.06f,
-        0.04f,
-
-        0.28f,
-        0.025f,
-        0.025f);
-  }
-
-  /*
-   * ============================================================
-   * TRANSFORMACIÓN LOCAL → MUNDO
-   * ============================================================
-   */
-
-  private void drawPart(
-      Renderer renderer,
-
-      float localX,
-      float worldY,
-      float localForward,
-
-      float sizeX,
-      float sizeY,
-      float sizeZ,
-
-      float red,
-      float green,
-      float blue) {
-
-    float sin = (float) Math.sin(
-        angle);
-
-    float cos = (float) Math.cos(
-        angle);
-
-    /*
-     * Vector derecho:
-     *
-     * ( cos(angle), -sin(angle) )
-     *
-     * Vector frontal:
-     *
-     * ( -sin(angle), -cos(angle) )
-     */
-
-    float worldX = x
-        + cos
-            * localX
-        - sin
-            * localForward;
-
-    float worldZ = z
-        - sin
-            * localX
-        - cos
-            * localForward;
-
-    renderer.rotatedBox(
-        worldX,
-        worldY,
-        worldZ,
-
-        sizeX,
-        sizeY,
-        sizeZ,
-
-        red,
-        green,
-        blue,
-
-        angle);
+        x,
+        z,
+        angle,
+        VISUAL_SCALE,
+        bodyMaterial);
   }
 
   /*

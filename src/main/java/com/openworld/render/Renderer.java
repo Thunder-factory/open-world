@@ -1,6 +1,8 @@
 package com.openworld.render;
 
 import com.openworld.lighting.LightingSystem;
+import com.openworld.render.mesh.Mesh;
+import com.openworld.render.mesh.MeshLibrary;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -27,9 +29,11 @@ public final class Renderer {
   private static final int STRIDE = FLOATS_PER_VERTEX
       * Float.BYTES;
 
-  private static final int VERTEX_COUNT = 36;
-
   private static final int TRIANGLE_VERTEX_COUNT = 3;
+
+  private static final float DEFAULT_SPECULAR_STRENGTH = 0.0f;
+
+  private static final float DEFAULT_SHININESS = 16.0f;
 
   /*
    * Triángulo horizontal utilizado como marcador
@@ -53,113 +57,13 @@ public final class Renderer {
 
   /*
    * ============================================================
-   * CUBO UNITARIO
-   * ============================================================
-   *
-   * El cubo se encuentra centrado en:
-   *
-   * (0, 0, 0)
-   *
-   * Cada vértice contiene:
-   *
-   * position: x y z
-   * normal: x y z
-   */
-
-  private static final float[] CUBE_VERTICES = {
-
-      /*
-       * ====================================================
-       * FRONT +Z
-       * ====================================================
-       */
-
-      -0.5f, -0.5f, 0.5f, 0, 0, 1,
-      0.5f, -0.5f, 0.5f, 0, 0, 1,
-      0.5f, 0.5f, 0.5f, 0, 0, 1,
-
-      0.5f, 0.5f, 0.5f, 0, 0, 1,
-      -0.5f, 0.5f, 0.5f, 0, 0, 1,
-      -0.5f, -0.5f, 0.5f, 0, 0, 1,
-
-      /*
-       * ====================================================
-       * BACK -Z
-       * ====================================================
-       */
-
-      0.5f, -0.5f, -0.5f, 0, 0, -1,
-      -0.5f, -0.5f, -0.5f, 0, 0, -1,
-      -0.5f, 0.5f, -0.5f, 0, 0, -1,
-
-      -0.5f, 0.5f, -0.5f, 0, 0, -1,
-      0.5f, 0.5f, -0.5f, 0, 0, -1,
-      0.5f, -0.5f, -0.5f, 0, 0, -1,
-
-      /*
-       * ====================================================
-       * LEFT -X
-       * ====================================================
-       */
-
-      -0.5f, -0.5f, -0.5f, -1, 0, 0,
-      -0.5f, -0.5f, 0.5f, -1, 0, 0,
-      -0.5f, 0.5f, 0.5f, -1, 0, 0,
-
-      -0.5f, 0.5f, 0.5f, -1, 0, 0,
-      -0.5f, 0.5f, -0.5f, -1, 0, 0,
-      -0.5f, -0.5f, -0.5f, -1, 0, 0,
-
-      /*
-       * ====================================================
-       * RIGHT +X
-       * ====================================================
-       */
-
-      0.5f, -0.5f, 0.5f, 1, 0, 0,
-      0.5f, -0.5f, -0.5f, 1, 0, 0,
-      0.5f, 0.5f, -0.5f, 1, 0, 0,
-
-      0.5f, 0.5f, -0.5f, 1, 0, 0,
-      0.5f, 0.5f, 0.5f, 1, 0, 0,
-      0.5f, -0.5f, 0.5f, 1, 0, 0,
-
-      /*
-       * ====================================================
-       * TOP +Y
-       * ====================================================
-       */
-
-      -0.5f, 0.5f, 0.5f, 0, 1, 0,
-      0.5f, 0.5f, 0.5f, 0, 1, 0,
-      0.5f, 0.5f, -0.5f, 0, 1, 0,
-
-      0.5f, 0.5f, -0.5f, 0, 1, 0,
-      -0.5f, 0.5f, -0.5f, 0, 1, 0,
-      -0.5f, 0.5f, 0.5f, 0, 1, 0,
-
-      /*
-       * ====================================================
-       * BOTTOM -Y
-       * ====================================================
-       */
-
-      -0.5f, -0.5f, -0.5f, 0, -1, 0,
-      0.5f, -0.5f, -0.5f, 0, -1, 0,
-      0.5f, -0.5f, 0.5f, 0, -1, 0,
-
-      0.5f, -0.5f, 0.5f, 0, -1, 0,
-      -0.5f, -0.5f, 0.5f, 0, -1, 0,
-      -0.5f, -0.5f, -0.5f, 0, -1, 0
-  };
-
-  /*
-   * ============================================================
    * RECURSOS DE RENDER
    * ============================================================
    */
 
   private final ShaderProgram shader;
+
+  private final MeshLibrary meshLibrary;
 
   /*
    * ============================================================
@@ -171,8 +75,9 @@ public final class Renderer {
 
   private final Vector3f color = new Vector3f();
 
-  private final Vector3f minimapCircle =
-      new Vector3f(-1.0f, -1.0f, -1.0f);
+  private final Vector3f viewPosition = new Vector3f();
+
+  private final Vector3f minimapCircle = new Vector3f(-1.0f, -1.0f, -1.0f);
 
   /*
    * Matrices utilizadas exclusivamente
@@ -187,10 +92,6 @@ public final class Renderer {
    * OPENGL
    * ============================================================
    */
-
-  private int vaoId;
-
-  private int vboId;
 
   private int triangleVaoId;
 
@@ -208,7 +109,7 @@ public final class Renderer {
         "/shaders/vertex.glsl",
         "/shaders/fragment.glsl");
 
-    createCubeMesh();
+    meshLibrary = new MeshLibrary();
 
     createTriangleMesh();
 
@@ -219,95 +120,6 @@ public final class Renderer {
      */
     glEnable(
         GL_DEPTH_TEST);
-  }
-
-  /*
-   * ============================================================
-   * CREACIÓN DEL CUBO
-   * ============================================================
-   */
-
-  private void createCubeMesh() {
-
-    vaoId = glGenVertexArrays();
-
-    glBindVertexArray(
-        vaoId);
-
-    vboId = glGenBuffers();
-
-    glBindBuffer(
-        GL_ARRAY_BUFFER,
-        vboId);
-
-    FloatBuffer buffer = memAllocFloat(
-        CUBE_VERTICES.length);
-
-    try {
-
-      buffer
-          .put(
-              CUBE_VERTICES)
-          .flip();
-
-      glBufferData(
-          GL_ARRAY_BUFFER,
-          buffer,
-          GL_STATIC_DRAW);
-
-    } finally {
-
-      memFree(
-          buffer);
-    }
-
-    /*
-     * ========================================================
-     * ATRIBUTO 0
-     * ========================================================
-     *
-     * position.xyz
-     */
-
-    glVertexAttribPointer(
-        0,
-        3,
-        GL_FLOAT,
-        false,
-        STRIDE,
-        0L);
-
-    glEnableVertexAttribArray(
-        0);
-
-    /*
-     * ========================================================
-     * ATRIBUTO 1
-     * ========================================================
-     *
-     * normal.xyz
-     *
-     * Las normales comienzan después
-     * de los primeros tres floats.
-     */
-
-    glVertexAttribPointer(
-        1,
-        3,
-        GL_FLOAT,
-        false,
-        STRIDE,
-        3L * Float.BYTES);
-
-    glEnableVertexAttribArray(
-        1);
-
-    glBindBuffer(
-        GL_ARRAY_BUFFER,
-        0);
-
-    glBindVertexArray(
-        0);
   }
 
   /*
@@ -446,6 +258,12 @@ public final class Renderer {
         camera.getProjectionMatrix(
             aspectRatio));
 
+    camera.copyPosition(viewPosition);
+
+    shader.setUniform(
+        "uViewPosition",
+        viewPosition);
+
     /*
      * ========================================================
      * ILUMINACIÓN
@@ -455,8 +273,6 @@ public final class Renderer {
     lighting.apply(
         shader);
 
-    glBindVertexArray(
-        vaoId);
   }
 
   /*
@@ -574,6 +390,214 @@ public final class Renderer {
         emissionStrength);
   }
 
+  public void quad(
+      float x,
+      float y,
+      float z,
+      float width,
+      float height,
+      float rotationX,
+      float rotationY,
+      float rotationZ,
+      float red,
+      float green,
+      float blue,
+      float emissionStrength) {
+
+    drawMesh(
+        meshLibrary.getQuad(),
+        x, y, z,
+        rotationX, rotationY, rotationZ,
+        width, height, 1.0f,
+        red, green, blue,
+        emissionStrength);
+  }
+
+  public void cylinder(
+      float x,
+      float y,
+      float z,
+      float sizeX,
+      float sizeY,
+      float sizeZ,
+      float rotationX,
+      float rotationY,
+      float rotationZ,
+      float red,
+      float green,
+      float blue,
+      float emissionStrength) {
+
+    drawMesh(
+        meshLibrary.getCylinder(),
+        x, y, z,
+        rotationX, rotationY, rotationZ,
+        sizeX, sizeY, sizeZ,
+        red, green, blue,
+        emissionStrength);
+  }
+
+  public void sphere(
+      float x,
+      float y,
+      float z,
+      float sizeX,
+      float sizeY,
+      float sizeZ,
+      float rotationX,
+      float rotationY,
+      float rotationZ,
+      float red,
+      float green,
+      float blue,
+      float emissionStrength) {
+
+    drawMesh(
+        meshLibrary.getSphere(),
+        x, y, z,
+        rotationX, rotationY, rotationZ,
+        sizeX, sizeY, sizeZ,
+        red, green, blue,
+        emissionStrength);
+  }
+
+  public void cone(
+      float x,
+      float y,
+      float z,
+      float sizeX,
+      float sizeY,
+      float sizeZ,
+      float rotationX,
+      float rotationY,
+      float rotationZ,
+      float red,
+      float green,
+      float blue,
+      float emissionStrength) {
+
+    drawMesh(
+        meshLibrary.getCone(),
+        x, y, z,
+        rotationX, rotationY, rotationZ,
+        sizeX, sizeY, sizeZ,
+        red, green, blue,
+        emissionStrength);
+  }
+
+  public void windowFrame(
+      float x,
+      float y,
+      float z,
+      float width,
+      float height,
+      float depth,
+      float rotationY,
+      float red,
+      float green,
+      float blue) {
+
+    drawMesh(
+        meshLibrary.getWindowFrame(),
+        x, y, z,
+        0.0f, rotationY, 0.0f,
+        width, height, depth,
+        red, green, blue,
+        0.0f);
+  }
+
+  public void vehicleBody(
+      float x,
+      float y,
+      float z,
+      float scale,
+      float rotationY,
+      float red,
+      float green,
+      float blue) {
+
+    if (scale <= 0.0f) {
+      return;
+    }
+
+    drawMesh(
+        meshLibrary.getVehicleBody(),
+        x, y, z,
+        0.0f, rotationY, 0.0f,
+        scale, scale, scale,
+        red, green, blue,
+        0.0f);
+  }
+
+  public void quad(
+      float x, float y, float z,
+      float width, float height,
+      float rotationX, float rotationY, float rotationZ,
+      Material material) {
+
+    drawMesh(meshLibrary.getQuad(), x, y, z,
+        rotationX, rotationY, rotationZ,
+        width, height, 1.0f, material);
+  }
+
+  public void cylinder(
+      float x, float y, float z,
+      float sizeX, float sizeY, float sizeZ,
+      float rotationX, float rotationY, float rotationZ,
+      Material material) {
+
+    drawMesh(meshLibrary.getCylinder(), x, y, z,
+        rotationX, rotationY, rotationZ,
+        sizeX, sizeY, sizeZ, material);
+  }
+
+  public void sphere(
+      float x, float y, float z,
+      float sizeX, float sizeY, float sizeZ,
+      float rotationX, float rotationY, float rotationZ,
+      Material material) {
+
+    drawMesh(meshLibrary.getSphere(), x, y, z,
+        rotationX, rotationY, rotationZ,
+        sizeX, sizeY, sizeZ, material);
+  }
+
+  public void cone(
+      float x, float y, float z,
+      float sizeX, float sizeY, float sizeZ,
+      float rotationX, float rotationY, float rotationZ,
+      Material material) {
+
+    drawMesh(meshLibrary.getCone(), x, y, z,
+        rotationX, rotationY, rotationZ,
+        sizeX, sizeY, sizeZ, material);
+  }
+
+  public void windowFrame(
+      float x, float y, float z,
+      float width, float height, float depth,
+      float rotationY,
+      Material material) {
+
+    drawMesh(meshLibrary.getWindowFrame(), x, y, z,
+        0.0f, rotationY, 0.0f,
+        width, height, depth, material);
+  }
+
+  public void vehicleBody(
+      float x, float y, float z,
+      float scale, float rotationY,
+      Material material) {
+
+    if (scale <= 0.0f) {
+      return;
+    }
+
+    drawMesh(meshLibrary.getVehicleBody(), x, y, z,
+        0.0f, rotationY, 0.0f,
+        scale, scale, scale, material);
+  }
+
   /*
    * ============================================================
    * TRIÁNGULO PARA MINIMAPA
@@ -652,8 +676,7 @@ public final class Renderer {
      * Se restaura la malla del cubo porque el resto
      * del Renderer utiliza esa geometría.
      */
-    glBindVertexArray(
-        vaoId);
+    meshLibrary.getCube().bind();
   }
 
   public void minimapMarkerBox(
@@ -708,29 +731,99 @@ public final class Renderer {
       float rotationY,
       float emissionStrength) {
 
-    model
-        .identity()
-
-        .translate(
-            x,
-            y,
-            z)
-
-        .rotateY(
-            rotationY)
-
-        .scale(
-            sizeX,
-            sizeY,
-            sizeZ);
-
-    color.set(
+    drawMesh(
+        meshLibrary.getCube(),
+        x,
+        y,
+        z,
+        0.0f,
+        rotationY,
+        0.0f,
+        sizeX,
+        sizeY,
+        sizeZ,
         red,
         green,
-        blue);
-
-    drawCurrentModel(
+        blue,
         emissionStrength);
+  }
+
+  private void drawMesh(
+      Mesh mesh,
+      float x,
+      float y,
+      float z,
+      float rotationX,
+      float rotationY,
+      float rotationZ,
+      float scaleX,
+      float scaleY,
+      float scaleZ,
+      float red,
+      float green,
+      float blue,
+      float emissionStrength) {
+
+    drawMesh(mesh, x, y, z,
+        rotationX, rotationY, rotationZ,
+        scaleX, scaleY, scaleZ,
+        red, green, blue, emissionStrength,
+        DEFAULT_SPECULAR_STRENGTH, DEFAULT_SHININESS);
+  }
+
+  private void drawMesh(
+      Mesh mesh,
+      float x, float y, float z,
+      float rotationX, float rotationY, float rotationZ,
+      float scaleX, float scaleY, float scaleZ,
+      Material material) {
+
+    if (material == null) {
+      throw new IllegalArgumentException(
+          "El material no puede ser null");
+    }
+
+    drawMesh(mesh, x, y, z,
+        rotationX, rotationY, rotationZ,
+        scaleX, scaleY, scaleZ,
+        material.getRed(), material.getGreen(), material.getBlue(),
+        material.getEmissionStrength(), material.getSpecularStrength(),
+        material.getShininess());
+  }
+
+  private void drawMesh(
+      Mesh mesh,
+      float x, float y, float z,
+      float rotationX, float rotationY, float rotationZ,
+      float scaleX, float scaleY, float scaleZ,
+      float red, float green, float blue,
+      float emissionStrength,
+      float specularStrength,
+      float shininess) {
+
+    if (mesh == null) {
+
+      throw new IllegalArgumentException(
+          "La malla no puede ser null");
+    }
+
+    model
+        .identity()
+        .translate(x, y, z)
+        .rotateY(rotationY)
+        .rotateX(rotationX)
+        .rotateZ(rotationZ)
+        .scale(scaleX, scaleY, scaleZ);
+
+    color.set(red, green, blue);
+
+    shader.setUniform("uModel", model);
+    shader.setUniform("uColor", color);
+    shader.setUniform("uEmissionStrength", emissionStrength);
+    shader.setUniform("uSpecularStrength", specularStrength);
+    shader.setUniform("uShininess", shininess);
+
+    mesh.draw();
   }
 
   /*
@@ -746,7 +839,10 @@ public final class Renderer {
       int height,
       Matrix4f view,
       Matrix4f projection,
-      LightingSystem lighting) {
+      LightingSystem lighting,
+      float cameraX,
+      float cameraY,
+      float cameraZ) {
 
     /*
      * Scissor limita el clear exclusivamente
@@ -803,11 +899,15 @@ public final class Renderer {
         "uProjection",
         projection);
 
+    viewPosition.set(cameraX, cameraY, cameraZ);
+
+    shader.setUniform(
+        "uViewPosition",
+        viewPosition);
+
     lighting.apply(
         shader);
 
-    glBindVertexArray(
-        vaoId);
   }
 
   public void endMinimap(
@@ -935,8 +1035,6 @@ public final class Renderer {
      * La malla cúbica también se reutiliza
      * para formar rectángulos planos.
      */
-    glBindVertexArray(
-        vaoId);
   }
 
   /**
@@ -974,44 +1072,21 @@ public final class Renderer {
     float centerY = y
         + height / 2.0f;
 
-    model
-        .identity()
-
-        .translate(
-            centerX,
-            centerY,
-            0.0f)
-
-        .scale(
-            width,
-            height,
-            1.0f);
-
-    color.set(
+    drawMesh(
+        meshLibrary.getCube(),
+        centerX,
+        centerY,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        width,
+        height,
+        1.0f,
         red,
         green,
-        blue);
-
-    shader.setUniform(
-        "uModel",
-        model);
-
-    shader.setUniform(
-        "uColor",
-        color);
-
-    /*
-     * La emisión no se utiliza porque uUnlit
-     * ya permite conservar el color directamente.
-     */
-    shader.setUniform(
-        "uEmissionStrength",
+        blue,
         0.0f);
-
-    glDrawArrays(
-        GL_TRIANGLES,
-        0,
-        VERTEX_COUNT);
   }
 
   public void hudRectRotated(
@@ -1036,39 +1111,21 @@ public final class Renderer {
     float centerY = y
         + height / 2.0f;
 
-    model
-        .identity()
-        .translate(
-            centerX,
-            centerY,
-            0.0f)
-        .rotateZ(rotation)
-        .scale(
-            width,
-            height,
-            1.0f);
-
-    color.set(
+    drawMesh(
+        meshLibrary.getCube(),
+        centerX,
+        centerY,
+        0.0f,
+        0.0f,
+        0.0f,
+        rotation,
+        width,
+        height,
+        1.0f,
         red,
         green,
-        blue);
-
-    shader.setUniform(
-        "uModel",
-        model);
-
-    shader.setUniform(
-        "uColor",
-        color);
-
-    shader.setUniform(
-        "uEmissionStrength",
+        blue,
         0.0f);
-
-    glDrawArrays(
-        GL_TRIANGLES,
-        0,
-        VERTEX_COUNT);
   }
 
   /**
@@ -1104,26 +1161,20 @@ public final class Renderer {
    */
   public void drawTestCube() {
 
-    model
-        .identity()
-
-        .rotateX(
-            (float) Math.toRadians(
-                -25.0))
-
-        .rotateY(
-            (float) Math.toRadians(
-                35.0))
-
-        .scale(
-            0.9f);
-
-    color.set(
+    drawMesh(
+        meshLibrary.getCube(),
+        0.0f,
+        0.0f,
+        0.0f,
+        (float) Math.toRadians(-25.0),
+        (float) Math.toRadians(35.0),
+        0.0f,
+        0.9f,
+        0.9f,
+        0.9f,
         0.15f,
         0.65f,
-        0.95f);
-
-    drawCurrentModel(
+        0.95f,
         0.0f);
   }
 
@@ -1132,34 +1183,6 @@ public final class Renderer {
    * DRAW CALL
    * ============================================================
    */
-
-  private void drawCurrentModel(
-      float emissionStrength) {
-
-    shader.setUniform(
-        "uModel",
-        model);
-
-    shader.setUniform(
-        "uColor",
-        color);
-
-    /*
-     * Los objetos convencionales reciben 0.
-     *
-     * Las bombillas pueden utilizar valores
-     * mayores para permanecer visualmente brillantes.
-     */
-
-    shader.setUniform(
-        "uEmissionStrength",
-        emissionStrength);
-
-    glDrawArrays(
-        GL_TRIANGLES,
-        0,
-        VERTEX_COUNT);
-  }
 
   /*
    * ============================================================
@@ -1199,21 +1222,7 @@ public final class Renderer {
       triangleVaoId = 0;
     }
 
-    if (vboId != 0) {
-
-      glDeleteBuffers(
-          vboId);
-
-      vboId = 0;
-    }
-
-    if (vaoId != 0) {
-
-      glDeleteVertexArrays(
-          vaoId);
-
-      vaoId = 0;
-    }
+    meshLibrary.cleanup();
 
     shader.cleanup();
   }

@@ -15,273 +15,229 @@ import static org.lwjgl.opengl.GL20.*;
 
 public final class ShaderProgram {
 
-    private final int programId;
+  private final int programId;
 
-    private final Map<String, Integer> uniformLocations =
-            new HashMap<>();
+  private final Map<String, Integer> uniformLocations = new HashMap<>();
 
-    public ShaderProgram(
-            String vertexShaderResource,
-            String fragmentShaderResource
-    ) {
+  public ShaderProgram(
+      String vertexShaderResource,
+      String fragmentShaderResource) {
 
-        String vertexSource =
-                loadResource(vertexShaderResource);
+    String vertexSource = loadResource(vertexShaderResource);
 
-        String fragmentSource =
-                loadResource(fragmentShaderResource);
+    String fragmentSource = loadResource(fragmentShaderResource);
 
-        int vertexShaderId =
-                compileShader(
-                        GL_VERTEX_SHADER,
-                        vertexSource,
-                        vertexShaderResource
-                );
+    int vertexShaderId = compileShader(
+        GL_VERTEX_SHADER,
+        vertexSource,
+        vertexShaderResource);
 
-        int fragmentShaderId =
-                compileShader(
-                        GL_FRAGMENT_SHADER,
-                        fragmentSource,
-                        fragmentShaderResource
-                );
+    int fragmentShaderId = compileShader(
+        GL_FRAGMENT_SHADER,
+        fragmentSource,
+        fragmentShaderResource);
 
-        programId = glCreateProgram();
+    programId = glCreateProgram();
 
-        if (programId == 0) {
+    if (programId == 0) {
 
-            glDeleteShader(vertexShaderId);
-            glDeleteShader(fragmentShaderId);
+      glDeleteShader(vertexShaderId);
+      glDeleteShader(fragmentShaderId);
 
-            throw new IllegalStateException(
-                    "No se pudo crear el programa OpenGL"
-            );
-        }
-
-        glAttachShader(
-                programId,
-                vertexShaderId
-        );
-
-        glAttachShader(
-                programId,
-                fragmentShaderId
-        );
-
-        glLinkProgram(programId);
-
-        if (glGetProgrami(
-                programId,
-                GL_LINK_STATUS
-        ) == GL_FALSE) {
-
-            String log =
-                    glGetProgramInfoLog(programId);
-
-            glDetachShader(
-                    programId,
-                    vertexShaderId
-            );
-
-            glDetachShader(
-                    programId,
-                    fragmentShaderId
-            );
-
-            glDeleteShader(vertexShaderId);
-            glDeleteShader(fragmentShaderId);
-
-            glDeleteProgram(programId);
-
-            throw new IllegalStateException(
-                    "Error enlazando shaders:\n"
-                            + log
-            );
-        }
-
-        /*
-         * Una vez enlazado el programa,
-         * los shaders individuales ya no
-         * son necesarios.
-         */
-        glDetachShader(
-                programId,
-                vertexShaderId
-        );
-
-        glDetachShader(
-                programId,
-                fragmentShaderId
-        );
-
-        glDeleteShader(vertexShaderId);
-        glDeleteShader(fragmentShaderId);
+      throw new IllegalStateException(
+          "No se pudo crear el programa OpenGL");
     }
 
-    private int compileShader(
-            int type,
-            String source,
-            String resourceName
-    ) {
+    glAttachShader(
+        programId,
+        vertexShaderId);
 
-        int shaderId =
-                glCreateShader(type);
+    glAttachShader(
+        programId,
+        fragmentShaderId);
 
-        if (shaderId == 0) {
-            throw new IllegalStateException(
-                    "No se pudo crear shader: "
-                            + resourceName
-            );
-        }
+    glLinkProgram(programId);
 
-        glShaderSource(
-                shaderId,
-                source
-        );
+    if (glGetProgrami(
+        programId,
+        GL_LINK_STATUS) == GL_FALSE) {
 
-        glCompileShader(shaderId);
+      String log = glGetProgramInfoLog(programId);
 
-        if (glGetShaderi(
-                shaderId,
-                GL_COMPILE_STATUS
-        ) == GL_FALSE) {
+      glDetachShader(
+          programId,
+          vertexShaderId);
 
-            String log =
-                    glGetShaderInfoLog(shaderId);
+      glDetachShader(
+          programId,
+          fragmentShaderId);
 
-            glDeleteShader(shaderId);
+      glDeleteShader(vertexShaderId);
+      glDeleteShader(fragmentShaderId);
 
-            throw new IllegalStateException(
-                    "Error compilando "
-                            + resourceName
-                            + ":\n"
-                            + log
-            );
-        }
+      glDeleteProgram(programId);
 
-        return shaderId;
+      throw new IllegalStateException(
+          "Error enlazando shaders:\n"
+              + log);
     }
 
-    private String loadResource(
-            String resourcePath
-    ) {
+    /*
+     * Una vez enlazado el programa,
+     * los shaders individuales ya no
+     * son necesarios.
+     */
+    glDetachShader(
+        programId,
+        vertexShaderId);
 
-        try (InputStream inputStream =
-                     ShaderProgram.class
-                             .getResourceAsStream(
-                                     resourcePath
-                             )) {
+    glDetachShader(
+        programId,
+        fragmentShaderId);
 
-            if (inputStream == null) {
+    glDeleteShader(vertexShaderId);
+    glDeleteShader(fragmentShaderId);
+  }
 
-                throw new IllegalStateException(
-                        "No se encontró recurso: "
-                                + resourcePath
-                );
-            }
+  private int compileShader(
+      int type,
+      String source,
+      String resourceName) {
 
-            return new String(
-                    inputStream.readAllBytes(),
-                    StandardCharsets.UTF_8
-            );
+    int shaderId = glCreateShader(type);
 
-        } catch (IOException e) {
-
-            throw new IllegalStateException(
-                    "No se pudo leer recurso: "
-                            + resourcePath,
-                    e
-            );
-        }
+    if (shaderId == 0) {
+      throw new IllegalStateException(
+          "No se pudo crear shader: "
+              + resourceName);
     }
 
-    public void bind() {
-        glUseProgram(programId);
+    glShaderSource(
+        shaderId,
+        source);
+
+    glCompileShader(shaderId);
+
+    if (glGetShaderi(
+        shaderId,
+        GL_COMPILE_STATUS) == GL_FALSE) {
+
+      String log = glGetShaderInfoLog(shaderId);
+
+      glDeleteShader(shaderId);
+
+      throw new IllegalStateException(
+          "Error compilando "
+              + resourceName
+              + ":\n"
+              + log);
     }
 
-    public static void unbind() {
-        glUseProgram(0);
+    return shaderId;
+  }
+
+  private String loadResource(
+      String resourcePath) {
+
+    try (InputStream inputStream = ShaderProgram.class
+        .getResourceAsStream(
+            resourcePath)) {
+
+      if (inputStream == null) {
+
+        throw new IllegalStateException(
+            "No se encontró recurso: "
+                + resourcePath);
+      }
+
+      return new String(
+          inputStream.readAllBytes(),
+          StandardCharsets.UTF_8);
+
+    } catch (IOException e) {
+
+      throw new IllegalStateException(
+          "No se pudo leer recurso: "
+              + resourcePath,
+          e);
+    }
+  }
+
+  public void bind() {
+    glUseProgram(programId);
+  }
+
+  public static void unbind() {
+    glUseProgram(0);
+  }
+
+  private int getUniformLocation(
+      String name) {
+
+    Integer cached = uniformLocations.get(name);
+
+    if (cached != null) {
+      return cached;
     }
 
-    private int getUniformLocation(
-            String name
-    ) {
+    int location = glGetUniformLocation(
+        programId,
+        name);
 
-        Integer cached =
-                uniformLocations.get(name);
-
-        if (cached != null) {
-            return cached;
-        }
-
-        int location =
-                glGetUniformLocation(
-                        programId,
-                        name
-                );
-
-        if (location < 0) {
-            throw new IllegalArgumentException(
-                    "Uniform no encontrado: "
-                            + name
-            );
-        }
-
-        uniformLocations.put(
-                name,
-                location
-        );
-
-        return location;
+    if (location < 0) {
+      throw new IllegalArgumentException(
+          "Uniform no encontrado: "
+              + name);
     }
 
-    public void setUniform(
-            String name,
-            Matrix4f matrix
-    ) {
+    uniformLocations.put(
+        name,
+        location);
 
-        int location =
-                getUniformLocation(name);
+    return location;
+  }
 
-        try (MemoryStack stack =
-                     MemoryStack.stackPush()) {
+  public void setUniform(
+      String name,
+      Matrix4f matrix) {
 
-            FloatBuffer buffer =
-                    stack.mallocFloat(16);
+    int location = getUniformLocation(name);
 
-            matrix.get(buffer);
+    try (MemoryStack stack = MemoryStack.stackPush()) {
 
-            glUniformMatrix4fv(
-                    location,
-                    false,
-                    buffer
-            );
-        }
+      FloatBuffer buffer = stack.mallocFloat(16);
+
+      matrix.get(buffer);
+
+      glUniformMatrix4fv(
+          location,
+          false,
+          buffer);
     }
+  }
 
-    public void setUniform(
-            String name,
-            Vector3f vector
-    ) {
+  public void setUniform(
+      String name,
+      Vector3f vector) {
 
-        glUniform3f(
-                getUniformLocation(name),
-                vector.x,
-                vector.y,
-                vector.z
-        );
-    }
+    glUniform3f(
+        getUniformLocation(name),
+        vector.x,
+        vector.y,
+        vector.z);
+  }
 
-    public void setUniform(String name, float value) {
-        
-        glUniform1f(getUniformLocation(name), value);
-    }
+  public void setUniform(String name, float value) {
 
-    public void setUniform(String name, int value) {
-        
-        glUniform1i(getUniformLocation(name), value);
-    }
+    glUniform1f(getUniformLocation(name), value);
+  }
 
-    public void cleanup() {
-        glDeleteProgram(programId);
-    }
+  public void setUniform(String name, int value) {
+
+    glUniform1i(getUniformLocation(name), value);
+  }
+
+  public void cleanup() {
+    glDeleteProgram(programId);
+  }
 }

@@ -66,7 +66,10 @@ public final class AutonomousTrafficSystem {
    *
    * { fila, columna }
    *
-   * Las tres rutas utilizan sentido horario.
+   * Las rutas definen diferentes circuitos de circulación.
+   *
+   * Algunas utilizan recorridos horarios y otras incorporan
+   * recorridos inversos o trayectorias interiores.
    */
 
   private static final int[][] ROUTE_1 = {
@@ -752,8 +755,7 @@ public final class AutonomousTrafficSystem {
           + vehicle.getCollisionRadius();
 
       if (deltaX * deltaX
-          + deltaZ * deltaZ
-          < minimumDistance * minimumDistance) {
+          + deltaZ * deltaZ < minimumDistance * minimumDistance) {
 
         return false;
       }

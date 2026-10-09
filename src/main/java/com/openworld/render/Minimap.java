@@ -40,8 +40,7 @@ public final class Minimap {
    */
   private static final float VEHICLE_VIEW_RADIUS_CELLS = 3.20f;
 
-  private static final float VEHICLE_VIEW_RADIUS =
-      City.CELL_SIZE * VEHICLE_VIEW_RADIUS_CELLS;
+  private static final float VEHICLE_VIEW_RADIUS = City.CELL_SIZE * VEHICLE_VIEW_RADIUS_CELLS;
 
   private static final float CAMERA_HEIGHT = 180.0f;
 
@@ -103,7 +102,7 @@ public final class Minimap {
 
   private boolean visible = true;
 
-  private Mode mode = Mode.HEADING_UP;
+  private Mode mode = Mode.NORTH_UP;
 
   /*
    * ============================================================
@@ -119,6 +118,8 @@ public final class Minimap {
   public void reset() {
 
     visible = true;
+
+    mode = Mode.NORTH_UP;
   }
 
   public boolean isVisible() {
@@ -250,7 +251,11 @@ public final class Minimap {
         viewMatrix,
         projectionMatrix,
 
-        lighting);
+        lighting,
+
+        car.getX(),
+        CAMERA_HEIGHT,
+        car.getZ());
 
     try {
 
@@ -347,18 +352,14 @@ public final class Minimap {
     float centerY = y + size / 2.0f;
     float radius = size / 2.0f - FRAME_THICKNESS / 2.0f;
     int segmentCount = FRAME_SEGMENT_COUNT;
-    float segmentLength = (float) (
-        2.0 * Math.PI * radius / segmentCount
-            + FRAME_THICKNESS);
+    float segmentLength = (float) (2.0 * Math.PI * radius / segmentCount
+        + FRAME_THICKNESS);
 
-    for (int segment = 0;
-        segment < segmentCount;
-        segment++) {
+    for (int segment = 0; segment < segmentCount; segment++) {
 
-      float angle = (float) (
-          2.0 * Math.PI
-              * segment
-              / segmentCount);
+      float angle = (float) (2.0 * Math.PI
+          * segment
+          / segmentCount);
 
       float segmentCenterX = centerX
           + (float) Math.cos(angle) * radius;
@@ -444,8 +445,8 @@ public final class Minimap {
         framebufferHeight);
 
     int desiredSize = Math.round(
-            minimumDimension
-                * MINIMAP_SIZE_RATIO);
+        minimumDimension
+            * MINIMAP_SIZE_RATIO);
 
     desiredSize = Math.max(
         MIN_SIZE,
@@ -546,9 +547,8 @@ public final class Minimap {
         deltaX * deltaX
             + deltaZ * deltaZ);
 
-    return distance
-        <= VEHICLE_VIEW_RADIUS
-            * DESTINATION_VISIBLE_RADIUS_FACTOR;
+    return distance <= VEHICLE_VIEW_RADIUS
+        * DESTINATION_VISIBLE_RADIUS_FACTOR;
   }
 
   private void drawDestinationIndicator(
@@ -570,9 +570,8 @@ public final class Minimap {
         deltaX * deltaX
             + deltaZ * deltaZ);
 
-    if (distance
-        <= VEHICLE_VIEW_RADIUS
-            * DESTINATION_VISIBLE_RADIUS_FACTOR) {
+    if (distance <= VEHICLE_VIEW_RADIUS
+        * DESTINATION_VISIBLE_RADIUS_FACTOR) {
       return;
     }
 
@@ -580,9 +579,8 @@ public final class Minimap {
       return;
     }
 
-    float indicatorDistance =
-        VEHICLE_VIEW_RADIUS
-            * DESTINATION_INDICATOR_RADIUS_FACTOR;
+    float indicatorDistance = VEHICLE_VIEW_RADIUS
+        * DESTINATION_INDICATOR_RADIUS_FACTOR;
 
     float directionX = deltaX / distance;
     float directionZ = deltaZ / distance;

@@ -142,8 +142,7 @@ public final class Hud {
       float deltaTime,
       DeliveryManager deliveryManager) {
 
-    int completed =
-        deliveryManager.getCompletedDeliveries();
+    int completed = deliveryManager.getCompletedDeliveries();
 
     if (completed > previousCompletedDeliveries) {
 
@@ -151,8 +150,7 @@ public final class Hud {
 
       if (!deliveryManager.isFinished()) {
 
-        deliveryNotificationRemaining =
-            DELIVERY_NOTIFICATION_DURATION;
+        deliveryNotificationRemaining = DELIVERY_NOTIFICATION_DURATION;
       }
     }
 

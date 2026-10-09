@@ -981,6 +981,10 @@ public final class LogicValidator {
         minimap.isVisible(),
         "El minimapa debe iniciar visible");
 
+    require(
+        minimap.getMode() == Minimap.Mode.NORTH_UP,
+        "El minimapa debe iniciar con norte arriba");
+
     pass(
         "Estado inicial del minimapa");
   }
