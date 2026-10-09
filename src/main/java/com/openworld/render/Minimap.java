@@ -2,6 +2,7 @@ package com.openworld.render;
 
 import com.openworld.gameplay.DeliveryManager;
 import com.openworld.lighting.LightingSystem;
+import com.openworld.ui.BitmapFont;
 import com.openworld.vehicle.Car;
 import com.openworld.world.City;
 
@@ -21,11 +22,17 @@ public final class Minimap {
 
   private static final int MAX_SIZE = 300;
 
+  private static final float FRAME_THICKNESS = 3.0f;
+
   /*
-   * Se agrega un pequeño margen alrededor de la ciudad
-   * para evitar que los extremos queden pegados al borde.
+   * Radio visible alrededor del vehículo.
+   *
+   * La escala permanece fija para que el entorno cercano
+   * conserve el mismo tamaño mientras el auto se desplaza.
    */
-  private static final float WORLD_MARGIN = 4.0f;
+  private static final float VEHICLE_VIEW_RADIUS = 32.0f;
+
+  private static final float SIZE_SCALE = 0.81f;
 
   private static final float CAMERA_HEIGHT = 180.0f;
 
@@ -120,43 +127,47 @@ public final class Minimap {
         - size
         - MARGIN;
 
-    int viewportY = framebufferHeight
-        - size
-        - MARGIN;
-
-    float extent = city.getHalfSize()
-        + WORLD_MARGIN;
+    int viewportY = MARGIN;
 
     /*
      * La cámara observa verticalmente hacia abajo.
      *
-     * El vector UP se alinea con -Z para mantener
-     * el norte en la parte superior del minimapa.
+     * El objetivo sigue al vehículo y el vector UP utiliza
+     * su dirección frontal para mantener el auto hacia arriba.
+     *
+     * El mapa gira debajo del vehículo y conserva el norte
+     * como referencia dinámica en sus bordes.
      */
+
+    float forwardX =
+        -(float) Math.sin(car.getAngle());
+
+    float forwardZ =
+        -(float) Math.cos(car.getAngle());
 
     viewMatrix
         .identity()
         .lookAt(
-            0.0f,
+            car.getX(),
             CAMERA_HEIGHT,
-            0.0f,
+            car.getZ(),
 
+            car.getX(),
             0.0f,
-            0.0f,
-            0.0f,
+            car.getZ(),
 
+            forwardX,
             0.0f,
-            0.0f,
-            -1.0f);
+            forwardZ);
 
     projectionMatrix
         .identity()
         .ortho(
-            -extent,
-            extent,
+            -VEHICLE_VIEW_RADIUS,
+            VEHICLE_VIEW_RADIUS,
 
-            -extent,
-            extent,
+            -VEHICLE_VIEW_RADIUS,
+            VEHICLE_VIEW_RADIUS,
 
             0.1f,
             CAMERA_HEIGHT + 50.0f);
@@ -196,6 +207,150 @@ public final class Minimap {
           framebufferWidth,
           framebufferHeight);
     }
+
+    drawOverlay(
+        renderer,
+        car,
+        viewportX,
+        viewportY,
+        size,
+        framebufferWidth,
+        framebufferHeight);
+  }
+
+  /*
+   * ============================================================
+   * MARCO DE INTERFAZ
+   * ============================================================
+   */
+
+  private void drawOverlay(
+      Renderer renderer,
+      Car car,
+      int viewportX,
+      int viewportY,
+      int size,
+      int framebufferWidth,
+      int framebufferHeight) {
+
+    float top = framebufferHeight
+        - viewportY
+        - size;
+
+    renderer.beginHud(
+        framebufferWidth,
+        framebufferHeight);
+
+    try {
+
+      drawFrame(
+          renderer,
+          viewportX,
+          top,
+          size);
+
+      drawCompass(
+          renderer,
+          viewportX,
+          top,
+          size,
+          car.getAngle());
+
+    } finally {
+
+      renderer.endHud();
+    }
+  }
+
+  private void drawFrame(
+      Renderer renderer,
+      float x,
+      float y,
+      float size) {
+
+    float thickness = FRAME_THICKNESS;
+
+    float frameRed = 0.20f;
+    float frameGreen = 0.72f;
+    float frameBlue = 0.90f;
+
+    renderer.hudRect(
+        x,
+        y,
+        size,
+        thickness,
+        frameRed,
+        frameGreen,
+        frameBlue);
+
+    renderer.hudRect(
+        x,
+        y + size - thickness,
+        size,
+        thickness,
+        frameRed,
+        frameGreen,
+        frameBlue);
+
+    renderer.hudRect(
+        x,
+        y,
+        thickness,
+        size,
+        frameRed,
+        frameGreen,
+        frameBlue);
+
+    renderer.hudRect(
+        x + size - thickness,
+        y,
+        thickness,
+        size,
+        frameRed,
+        frameGreen,
+        frameBlue);
+  }
+
+  private void drawCompass(
+      Renderer renderer,
+      float x,
+      float y,
+      float size,
+      float rotationY) {
+
+    float centerX = x + size / 2.0f;
+    float centerY = y + size / 2.0f;
+    float radius = size / 2.0f - 15.0f;
+
+    float northX = (float) Math.sin(rotationY);
+    float northY = (float) Math.cos(rotationY);
+
+    drawCompassLabel(
+        renderer,
+        "N",
+        centerX + northX * radius,
+        centerY - northY * radius);
+  }
+
+  private void drawCompassLabel(
+      Renderer renderer,
+      String label,
+      float centerX,
+      float centerY) {
+
+    float pixelSize = 1.8f;
+    float textWidth = 6.0f * pixelSize;
+    float textHeight = 7.0f * pixelSize;
+
+    BitmapFont.drawText(
+        renderer,
+        label,
+        centerX - textWidth / 2.0f,
+        centerY - textHeight / 2.0f,
+        pixelSize,
+        1.00f,
+        0.90f,
+        0.38f);
   }
 
   /*
@@ -214,7 +369,8 @@ public final class Minimap {
 
     int desiredSize = Math.round(
         (minimumDimension / 3.0f)
-            * 0.85f);
+            * 0.85f
+            * SIZE_SCALE);
 
     desiredSize = Math.max(
         MIN_SIZE,
@@ -289,9 +445,9 @@ public final class Minimap {
         0.30f,
         2.20f,
 
-        0.15f,
-        0.75f,
         1.00f,
+        0.08f,
+        0.68f,
 
         1.80f);
   }

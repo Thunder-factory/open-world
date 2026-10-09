@@ -27,6 +27,51 @@ public final class City {
 
   /*
    * ============================================================
+   * VENTANAS DE EDIFICIOS
+   * ============================================================
+   */
+
+  private static final int BUILDING_WINDOW_COLUMNS = 2;
+
+  /*
+   * Dimensiones visuales de cada ventana.
+   */
+  private static final float BUILDING_WINDOW_WIDTH = 1.15f;
+
+  private static final float BUILDING_WINDOW_HEIGHT = 0.65f;
+
+  private static final float BUILDING_WINDOW_THICKNESS = 0.04f;
+
+  /*
+   * Separación vertical aproximada entre filas.
+   *
+   * Este valor determina automáticamente cuántas filas
+   * caben según la altura del edificio.
+   */
+  private static final float BUILDING_WINDOW_ROW_SPACING = 2.15f;
+
+  /*
+   * Márgenes verticales utilizados para evitar ventanas
+   * demasiado próximas al suelo o al techo.
+   */
+  private static final float BUILDING_WINDOW_BOTTOM_MARGIN = 1.10f;
+
+  private static final float BUILDING_WINDOW_TOP_MARGIN = 0.85f;
+
+  /*
+   * Separación horizontal de las columnas respecto
+   * al centro de cada fachada.
+   */
+  private static final float BUILDING_WINDOW_COLUMN_FACTOR = 0.22f;
+
+  /*
+   * Pequeño desplazamiento exterior para evitar
+   * superposición con la pared.
+   */
+  private static final float BUILDING_WINDOW_FACE_OFFSET = 0.025f;
+
+  /*
+   * ============================================================
    * PASOS PEATONALES
    * ============================================================
    */
@@ -127,6 +172,12 @@ public final class City {
   private static final float GROUND_HEIGHT = 0.50f;
 
   private static final float ROAD_HEIGHT = 0.05f;
+
+  private static final float ROAD_MARKING_LENGTH = 2.0f;
+
+  private static final float ROAD_MARKING_WIDTH = 0.12f;
+
+  private static final float ROAD_MARKING_OFFSET = 3.0f;
 
   private static final float SIDEWALK_HEIGHT = 0.20f;
 
@@ -414,26 +465,40 @@ public final class City {
       boolean night) {
 
     /*
-     * La cantidad de filas depende de la altura
-     * y se limita para mantener un costo de dibujo razonable.
+     * ============================================================
+     * ESPACIO VERTICAL DISPONIBLE
+     * ============================================================
+     */
+
+    float usableWindowHeight = buildingHeight
+        - BUILDING_WINDOW_BOTTOM_MARGIN
+        - BUILDING_WINDOW_TOP_MARGIN;
+
+    /*
+     * La cantidad de filas se obtiene automáticamente
+     * a partir de la altura disponible.
      */
     int windowRows = Math.max(
         1,
-        Math.min(
-            3,
-            (int) (buildingHeight
-                / 3.0f)));
-
-    float windowWidth = 1.35f;
-
-    float windowHeight = 0.65f;
-
-    float windowThickness = 0.04f;
+        (int) Math.floor(
+            usableWindowHeight
+                / BUILDING_WINDOW_ROW_SPACING));
 
     /*
-     * Las ventanas nocturnas utilizan un tono cálido
-     * y una componente emisiva.
+     * ============================================================
+     * COLUMNAS
+     * ============================================================
      */
+
+    float windowColumnOffset = buildingSize
+        * BUILDING_WINDOW_COLUMN_FACTOR;
+
+    /*
+     * ============================================================
+     * COLOR
+     * ============================================================
+     */
+
     float red = night
         ? 1.00f
         : 0.12f;
@@ -450,96 +515,161 @@ public final class City {
         ? 1.25f
         : 0.0f;
 
-    float halfBuilding = buildingSize / 2.0f;
+    /*
+     * ============================================================
+     * POSICIÓN DE FACHADAS
+     * ============================================================
+     */
+
+    float halfBuilding = buildingSize
+        / 2.0f;
+
+    float faceOffset = halfBuilding
+        + BUILDING_WINDOW_FACE_OFFSET;
 
     /*
-     * Un pequeño desplazamiento evita que las ventanas
-     * compartan exactamente el mismo plano que la fachada.
+     * ============================================================
+     * FILAS
+     * ============================================================
      */
-    float faceOffset = halfBuilding
-        + 0.025f;
 
     for (int row = 0; row < windowRows; row++) {
 
+      /*
+       * Las filas se distribuyen uniformemente
+       * dentro del espacio vertical disponible.
+       */
       float normalizedHeight = (row + 1.0f)
           / (windowRows + 1.0f);
 
       float windowY = SIDEWALK_HEIGHT
-          + 0.8f
+          + BUILDING_WINDOW_BOTTOM_MARGIN
           + normalizedHeight
-              * (buildingHeight - 1.6f);
+              * usableWindowHeight;
 
       /*
-       * Fachada norte.
+       * ========================================================
+       * COLUMNAS
+       * ========================================================
        */
-      renderer.emissiveBox(
-          buildingX,
-          windowY,
-          buildingZ - faceOffset,
 
-          windowWidth,
-          windowHeight,
-          windowThickness,
+      for (int column = 0; column < BUILDING_WINDOW_COLUMNS; column++) {
 
-          red,
-          green,
-          blue,
+        /*
+         * Se obtiene una posición normalizada
+         * entre -1 y +1.
+         */
+        float normalizedColumn = BUILDING_WINDOW_COLUMNS == 1
+            ? 0.0f
+            : ((float) column
+                / (BUILDING_WINDOW_COLUMNS
+                    - 1))
+                * 2.0f
+                - 1.0f;
 
-          emission);
+        float lateralOffset = normalizedColumn
+            * windowColumnOffset;
 
-      /*
-       * Fachada sur.
-       */
-      renderer.emissiveBox(
-          buildingX,
-          windowY,
-          buildingZ + faceOffset,
+        /*
+         * ====================================================
+         * NORTE
+         * ====================================================
+         */
 
-          windowWidth,
-          windowHeight,
-          windowThickness,
+        renderer.emissiveBox(
+            buildingX
+                + lateralOffset,
 
-          red,
-          green,
-          blue,
+            windowY,
 
-          emission);
+            buildingZ
+                - faceOffset,
 
-      /*
-       * Fachada oeste.
-       */
-      renderer.emissiveBox(
-          buildingX - faceOffset,
-          windowY,
-          buildingZ,
+            BUILDING_WINDOW_WIDTH,
+            BUILDING_WINDOW_HEIGHT,
+            BUILDING_WINDOW_THICKNESS,
 
-          windowThickness,
-          windowHeight,
-          windowWidth,
+            red,
+            green,
+            blue,
 
-          red,
-          green,
-          blue,
+            emission);
 
-          emission);
+        /*
+         * ====================================================
+         * SUR
+         * ====================================================
+         */
 
-      /*
-       * Fachada este.
-       */
-      renderer.emissiveBox(
-          buildingX + faceOffset,
-          windowY,
-          buildingZ,
+        renderer.emissiveBox(
+            buildingX
+                + lateralOffset,
 
-          windowThickness,
-          windowHeight,
-          windowWidth,
+            windowY,
 
-          red,
-          green,
-          blue,
+            buildingZ
+                + faceOffset,
 
-          emission);
+            BUILDING_WINDOW_WIDTH,
+            BUILDING_WINDOW_HEIGHT,
+            BUILDING_WINDOW_THICKNESS,
+
+            red,
+            green,
+            blue,
+
+            emission);
+
+        /*
+         * ====================================================
+         * OESTE
+         * ====================================================
+         */
+
+        renderer.emissiveBox(
+            buildingX
+                - faceOffset,
+
+            windowY,
+
+            buildingZ
+                + lateralOffset,
+
+            BUILDING_WINDOW_THICKNESS,
+            BUILDING_WINDOW_HEIGHT,
+            BUILDING_WINDOW_WIDTH,
+
+            red,
+            green,
+            blue,
+
+            emission);
+
+        /*
+         * ====================================================
+         * ESTE
+         * ====================================================
+         */
+
+        renderer.emissiveBox(
+            buildingX
+                + faceOffset,
+
+            windowY,
+
+            buildingZ
+                + lateralOffset,
+
+            BUILDING_WINDOW_THICKNESS,
+            BUILDING_WINDOW_HEIGHT,
+            BUILDING_WINDOW_WIDTH,
+
+            red,
+            green,
+            blue,
+
+            emission);
+      }
     }
   }
 
@@ -1284,18 +1414,25 @@ public final class City {
          */
         if (horizontal) {
 
-          renderer.box(
-              x,
-              0.065f,
-              z,
+          for (int segment = -1;
+              segment <= 1;
+              segment++) {
 
-              4.0f,
-              0.02f,
-              0.12f,
+            renderer.box(
+                x
+                    + segment
+                        * ROAD_MARKING_OFFSET,
+                0.065f,
+                z,
 
-              0.90f,
-              0.82f,
-              0.20f);
+                ROAD_MARKING_LENGTH,
+                0.02f,
+                ROAD_MARKING_WIDTH,
+
+                0.90f,
+                0.82f,
+                0.20f);
+          }
         }
 
         /*
@@ -1305,18 +1442,25 @@ public final class City {
          */
         if (vertical) {
 
-          renderer.box(
-              x,
-              0.065f,
-              z,
+          for (int segment = -1;
+              segment <= 1;
+              segment++) {
 
-              0.12f,
-              0.02f,
-              4.0f,
+            renderer.box(
+                x,
+                0.065f,
+                z
+                    + segment
+                        * ROAD_MARKING_OFFSET,
 
-              0.90f,
-              0.82f,
-              0.20f);
+                ROAD_MARKING_WIDTH,
+                0.02f,
+                ROAD_MARKING_LENGTH,
+
+                0.90f,
+                0.82f,
+                0.20f);
+          }
         }
       }
     }
