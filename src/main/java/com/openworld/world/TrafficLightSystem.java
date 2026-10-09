@@ -94,10 +94,6 @@ public final class TrafficLightSystem {
 
   private static final float HEAD_DEPTH = 0.60f;
 
-  private static final float BULB_SIZE = 0.68f;
-
-  private static final float BULB_HEIGHT = 0.32f;
-
   private static final float LENS_WIDTH = 0.34f;
 
   private static final float LENS_HEIGHT = 0.22f;

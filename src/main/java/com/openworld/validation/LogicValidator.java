@@ -4,6 +4,7 @@ import com.openworld.gameplay.DeliveryManager;
 import com.openworld.lighting.LightingSystem;
 import com.openworld.render.Camera;
 import com.openworld.render.Minimap;
+import com.openworld.traffic.AutonomousTrafficSystem;
 import com.openworld.vehicle.Car;
 import com.openworld.world.City;
 import com.openworld.world.TrafficLightSystem;
@@ -25,6 +26,7 @@ public final class LogicValidator {
       DeliveryManager deliveryManager,
       LightingSystem lighting,
       TrafficLightSystem trafficLights,
+      AutonomousTrafficSystem autonomousTraffic,
       Camera camera,
       Minimap minimap) {
 
@@ -55,6 +57,14 @@ public final class LogicValidator {
     validateCarMovementAndReset(
         city,
         car);
+
+    validateAutonomousTrafficInitialState(
+        city,
+        autonomousTraffic);
+
+    validateAutonomousTrafficMovementAndReset(
+        city,
+        autonomousTraffic);
 
     validateDeliveries(
         city,
@@ -448,6 +458,370 @@ public final class LogicValidator {
 
     pass(
         "Movimiento y reset del vehiculo");
+  }
+
+  /*
+   * ============================================================
+   * TRÁFICO AUTÓNOMO
+   * ============================================================
+   */
+
+  private static void validateAutonomousTrafficInitialState(
+      City city,
+      AutonomousTrafficSystem autonomousTraffic) {
+
+    int vehicleCount = autonomousTraffic.getVehicleCount();
+
+    /*
+     * Se requiere un mínimo de tres vehículos
+     * adicionales controlados automáticamente.
+     */
+    require(
+        vehicleCount >= 3,
+        "Se requieren al menos tres vehiculos autonomos");
+
+    for (int i = 0; i < vehicleCount; i++) {
+
+      float x = autonomousTraffic.getVehicleX(
+          i);
+
+      float z = autonomousTraffic.getVehicleZ(
+          i);
+
+      float radius = autonomousTraffic.getVehicleCollisionRadius(
+          i);
+
+      /*
+       * Cada vehículo debe comenzar completamente
+       * dentro de una zona transitable.
+       */
+      require(
+          city.canDrive(
+              x,
+              z,
+              radius),
+
+          "El vehiculo autonomo "
+              + (i + 1)
+              + " inicia fuera de una calle transitable");
+
+      /*
+       * Después de la inicialización la velocidad
+       * debe encontrarse en cero.
+       */
+      require(
+          Math.abs(
+              autonomousTraffic.getVehicleSpeed(
+                  i)) < 0.001f,
+
+          "El vehiculo autonomo "
+              + (i + 1)
+              + " no inicia detenido");
+
+      int routePointCount = autonomousTraffic.getRoutePointCount(
+          i);
+
+      /*
+       * Una ruta requiere varios puntos para permitir
+       * desplazamientos rectos y cambios de dirección.
+       */
+      require(
+          routePointCount >= 4,
+
+          "La ruta del vehiculo autonomo "
+              + (i + 1)
+              + " contiene pocos puntos");
+
+      int currentWaypoint = autonomousTraffic.getCurrentWaypointNumber(
+          i);
+
+      require(
+          currentWaypoint >= 1
+              && currentWaypoint <= routePointCount,
+
+          "El vehiculo autonomo "
+              + (i + 1)
+              + " tiene un waypoint invalido");
+    }
+
+    pass(
+        "Configuracion inicial del trafico autonomo");
+  }
+
+  private static void validateAutonomousTrafficMovementAndReset(
+      City city,
+      AutonomousTrafficSystem autonomousTraffic) {
+
+    int vehicleCount = autonomousTraffic.getVehicleCount();
+
+    float[] initialX = new float[vehicleCount];
+
+    float[] initialZ = new float[vehicleCount];
+
+    float[] initialAngle = new float[vehicleCount];
+
+    int[] initialWaypoint = new int[vehicleCount];
+
+    boolean[] movementObserved = new boolean[vehicleCount];
+
+    boolean[] turnObserved = new boolean[vehicleCount];
+
+    boolean[] waypointChangeObserved = new boolean[vehicleCount];
+
+    /*
+     * Se conserva el estado inicial para comprobar
+     * posteriormente el funcionamiento de reset().
+     */
+
+    for (int i = 0; i < vehicleCount; i++) {
+
+      initialX[i] = autonomousTraffic.getVehicleX(
+          i);
+
+      initialZ[i] = autonomousTraffic.getVehicleZ(
+          i);
+
+      initialAngle[i] = autonomousTraffic.getVehicleAngle(
+          i);
+
+      initialWaypoint[i] = autonomousTraffic.getCurrentWaypointNumber(
+          i);
+    }
+
+    /*
+     * ========================================================
+     * SIMULACIÓN CONTROLADA
+     * ========================================================
+     *
+     * Se simulan 25 segundos utilizando pasos de 0.05 s.
+     *
+     * Este valor coincide con el máximo deltaTime utilizado
+     * durante la ejecución normal.
+     *
+     * No existe render durante esta simulación.
+     */
+
+    final float simulationDeltaTime = 0.05f;
+
+    final int simulationSteps = 500;
+
+    for (int step = 0; step < simulationSteps; step++) {
+
+      autonomousTraffic.update(
+          simulationDeltaTime,
+          city);
+
+      for (int i = 0; i < vehicleCount; i++) {
+
+        float currentX = autonomousTraffic.getVehicleX(
+            i);
+
+        float currentZ = autonomousTraffic.getVehicleZ(
+            i);
+
+        /*
+         * ====================================================
+         * MOVIMIENTO
+         * ====================================================
+         */
+
+        float movementX = currentX
+            - initialX[i];
+
+        float movementZ = currentZ
+            - initialZ[i];
+
+        float movementDistanceSquared = movementX
+            * movementX
+            + movementZ
+                * movementZ;
+
+        if (movementDistanceSquared > 0.25f) {
+
+          movementObserved[i] = true;
+        }
+
+        /*
+         * ====================================================
+         * GIRO
+         * ====================================================
+         *
+         * Se comprueba si en algún momento la orientación
+         * se ha separado al menos 10 grados de la inicial.
+         */
+
+        float angleDifference = Math.abs(
+            normalizeAngle(
+                autonomousTraffic
+                    .getVehicleAngle(i)
+                    - initialAngle[i]));
+
+        if (angleDifference > Math.toRadians(
+            10.0)) {
+
+          turnObserved[i] = true;
+        }
+
+        /*
+         * ====================================================
+         * CAMBIO DE WAYPOINT
+         * ====================================================
+         */
+
+        if (autonomousTraffic
+            .getCurrentWaypointNumber(i) != initialWaypoint[i]) {
+
+          waypointChangeObserved[i] = true;
+        }
+
+        /*
+         * ====================================================
+         * SEGURIDAD DE POSICIÓN
+         * ====================================================
+         *
+         * En cada paso simulado se comprueba que el círculo
+         * completo del vehículo sigue siendo transitable.
+         */
+
+        require(
+            city.canDrive(
+                currentX,
+                currentZ,
+
+                autonomousTraffic
+                    .getVehicleCollisionRadius(i)),
+
+            "El vehiculo autonomo "
+                + (i + 1)
+                + " abandono una zona transitable");
+      }
+    }
+
+    /*
+     * ========================================================
+     * RESULTADOS DE LA SIMULACIÓN
+     * ========================================================
+     */
+
+    for (int i = 0; i < vehicleCount; i++) {
+
+      require(
+          movementObserved[i],
+
+          "El vehiculo autonomo "
+              + (i + 1)
+              + " no realizo desplazamiento");
+
+      require(
+          waypointChangeObserved[i],
+
+          "El vehiculo autonomo "
+              + (i + 1)
+              + " no alcanzo ningun waypoint");
+
+      require(
+          turnObserved[i],
+
+          "El vehiculo autonomo "
+              + (i + 1)
+              + " no realizo ningun giro");
+
+      require(
+          autonomousTraffic.getVehicleSpeed(
+              i) > 0.0f,
+
+          "El vehiculo autonomo "
+              + (i + 1)
+              + " termino la simulacion detenido");
+    }
+
+    /*
+     * ========================================================
+     * RESET
+     * ========================================================
+     */
+
+    autonomousTraffic.reset();
+
+    for (int i = 0; i < vehicleCount; i++) {
+
+      require(
+          Math.abs(
+              autonomousTraffic.getVehicleX(i)
+                  - initialX[i]) < 0.001f,
+
+          "El reset no restaura X del vehiculo autonomo "
+              + (i + 1));
+
+      require(
+          Math.abs(
+              autonomousTraffic.getVehicleZ(i)
+                  - initialZ[i]) < 0.001f,
+
+          "El reset no restaura Z del vehiculo autonomo "
+              + (i + 1));
+
+      require(
+          Math.abs(
+              normalizeAngle(
+                  autonomousTraffic
+                      .getVehicleAngle(i)
+                      - initialAngle[i])) < 0.001f,
+
+          "El reset no restaura el angulo del vehiculo autonomo "
+              + (i + 1));
+
+      require(
+          Math.abs(
+              autonomousTraffic.getVehicleSpeed(
+                  i)) < 0.001f,
+
+          "El reset no restaura la velocidad "
+              + "del vehiculo autonomo "
+              + (i + 1));
+
+      require(
+          autonomousTraffic.getCurrentWaypointNumber(
+              i) == initialWaypoint[i],
+
+          "El reset no restaura el waypoint "
+              + "del vehiculo autonomo "
+              + (i + 1));
+
+      require(
+          city.canDrive(
+              autonomousTraffic.getVehicleX(i),
+              autonomousTraffic.getVehicleZ(i),
+
+              autonomousTraffic
+                  .getVehicleCollisionRadius(i)),
+
+          "El reset deja al vehiculo autonomo "
+              + (i + 1)
+              + " fuera de la zona transitable");
+    }
+
+    pass(
+        "Movimiento, giros y reset del trafico autonomo");
+  }
+
+  private static float normalizeAngle(
+      float value) {
+
+    float fullTurn = (float) (Math.PI
+        * 2.0);
+
+    while (value > Math.PI) {
+
+      value -= fullTurn;
+    }
+
+    while (value < -Math.PI) {
+
+      value += fullTurn;
+    }
+
+    return value;
   }
 
   /*

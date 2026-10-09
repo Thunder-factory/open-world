@@ -172,6 +172,14 @@ public final class Renderer {
   private final Vector3f color = new Vector3f();
 
   /*
+   * Matrices utilizadas exclusivamente
+   * por la capa de interfaz 2D.
+   */
+  private final Matrix4f hudView = new Matrix4f();
+
+  private final Matrix4f hudProjection = new Matrix4f();
+
+  /*
    * ============================================================
    * OPENGL
    * ============================================================
@@ -403,6 +411,13 @@ public final class Renderer {
             GL_DEPTH_BUFFER_BIT);
 
     shader.bind();
+
+    /*
+     * La escena principal utiliza iluminación normal.
+     */
+    shader.setUniform(
+        "uUnlit",
+        0);
 
     /*
      * ========================================================
@@ -718,6 +733,14 @@ public final class Renderer {
 
     shader.bind();
 
+    /*
+     * El minimapa mantiene la iluminación utilizada
+     * actualmente por su representación.
+     */
+    shader.setUniform(
+        "uUnlit",
+        0);
+
     shader.setUniform(
         "uView",
         view);
@@ -750,6 +773,195 @@ public final class Renderer {
 
     glDisable(
         GL_SCISSOR_TEST);
+  }
+
+  /*
+   * ============================================================
+   * HUD
+   * ============================================================
+   */
+
+  /**
+   * Prepara una capa 2D expresada en píxeles.
+   *
+   * El origen se coloca visualmente en la esquina
+   * superior izquierda.
+   */
+  public void beginHud(
+      int framebufferWidth,
+      int framebufferHeight) {
+
+    if (framebufferWidth <= 0
+        || framebufferHeight <= 0) {
+
+      return;
+    }
+
+    /*
+     * Se utiliza nuevamente todo el framebuffer.
+     */
+    glViewport(
+        0,
+        0,
+        framebufferWidth,
+        framebufferHeight);
+
+    /*
+     * La interfaz no necesita prueba de profundidad.
+     *
+     * De esta forma permanece visible sobre la escena 3D.
+     */
+    glDisable(
+        GL_DEPTH_TEST);
+
+    /*
+     * La vista del HUD no utiliza cámara.
+     */
+    hudView
+        .identity();
+
+    /*
+     * Coordenadas de pantalla:
+     *
+     * (0, 0)
+     * esquina superior izquierda
+     *
+     * X aumenta hacia la derecha.
+     * Y aumenta hacia abajo.
+     */
+    hudProjection
+        .identity()
+        .ortho(
+            0.0f,
+            framebufferWidth,
+
+            framebufferHeight,
+            0.0f,
+
+            -1.0f,
+            1.0f);
+
+    shader.bind();
+
+    shader.setUniform(
+        "uView",
+        hudView);
+
+    shader.setUniform(
+        "uProjection",
+        hudProjection);
+
+    /*
+     * Los elementos del HUD mantienen su color
+     * independientemente de la iluminación 3D.
+     */
+    shader.setUniform(
+        "uUnlit",
+        1);
+
+    /*
+     * La malla cúbica también se reutiliza
+     * para formar rectángulos planos.
+     */
+    glBindVertexArray(
+        vaoId);
+  }
+
+  /**
+   * Dibuja un rectángulo 2D utilizando coordenadas
+   * de pantalla.
+   *
+   * x e y representan la esquina superior izquierda.
+   */
+  public void hudRect(
+      float x,
+      float y,
+
+      float width,
+      float height,
+
+      float red,
+      float green,
+      float blue) {
+
+    if (width <= 0.0f
+        || height <= 0.0f) {
+
+      return;
+    }
+
+    /*
+     * La malla base está centrada en el origen.
+     *
+     * Por eso se convierte la esquina superior izquierda
+     * recibida al centro del rectángulo.
+     */
+    float centerX = x
+        + width / 2.0f;
+
+    float centerY = y
+        + height / 2.0f;
+
+    model
+        .identity()
+
+        .translate(
+            centerX,
+            centerY,
+            0.0f)
+
+        .scale(
+            width,
+            height,
+            1.0f);
+
+    color.set(
+        red,
+        green,
+        blue);
+
+    shader.setUniform(
+        "uModel",
+        model);
+
+    shader.setUniform(
+        "uColor",
+        color);
+
+    /*
+     * La emisión no se utiliza porque uUnlit
+     * ya permite conservar el color directamente.
+     */
+    shader.setUniform(
+        "uEmissionStrength",
+        0.0f);
+
+    glDrawArrays(
+        GL_TRIANGLES,
+        0,
+        VERTEX_COUNT);
+  }
+
+  /**
+   * Restaura los estados temporales modificados
+   * durante el renderizado de la interfaz.
+   */
+  public void endHud() {
+
+    /*
+     * Se restaura el modo iluminado para mantener
+     * un estado consistente.
+     */
+    shader.setUniform(
+        "uUnlit",
+        0);
+
+    /*
+     * El siguiente frame vuelve a utilizar
+     * prueba de profundidad para la escena 3D.
+     */
+    glEnable(
+        GL_DEPTH_TEST);
   }
 
   /*

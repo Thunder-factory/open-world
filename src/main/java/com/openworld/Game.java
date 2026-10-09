@@ -5,14 +5,20 @@ import com.openworld.core.Window;
 
 import com.openworld.render.Camera;
 import com.openworld.render.Renderer;
+import com.openworld.render.Minimap;
 
 import com.openworld.vehicle.Car;
+import com.openworld.traffic.AutonomousTrafficSystem;
+
 import com.openworld.world.City;
+import com.openworld.world.TrafficLightSystem;
+
 import com.openworld.gameplay.DeliveryManager;
 import com.openworld.lighting.LightingSystem;
-import com.openworld.world.TrafficLightSystem;
-import com.openworld.render.Minimap;
+
 import com.openworld.validation.LogicValidator;
+
+import com.openworld.ui.Hud;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -36,7 +42,11 @@ public class Game {
 
   private TrafficLightSystem trafficLights;
 
+  private AutonomousTrafficSystem autonomousTraffic;
+
   private Minimap minimap;
+
+  private Hud hud;
 
   private double previousTime;
 
@@ -70,6 +80,9 @@ public class Game {
     renderer = new Renderer();
 
     city = new City();
+
+    autonomousTraffic = new AutonomousTrafficSystem(
+        city);
 
     trafficLights = new TrafficLightSystem(
         city);
@@ -119,6 +132,12 @@ public class Game {
     minimap = new Minimap();
 
     /*
+     * La interfaz se renderiza como una capa 2D
+     * independiente de la cámara principal.
+     */
+    hud = new Hud();
+
+    /*
      * Las comprobaciones se realizan después de inicializar
      * todos los sistemas que contienen lógica verificable.
      */
@@ -128,6 +147,7 @@ public class Game {
         deliveryManager,
         lighting,
         trafficLights,
+        autonomousTraffic,
         camera,
         minimap);
 
@@ -217,6 +237,16 @@ public class Game {
     }
 
     if (input.wasPressed(
+        GLFW_KEY_H)) {
+
+      hud.toggleHelp();
+
+      System.out.println(
+          "Ayuda -> "
+              + hud.getHelpStateName());
+    }
+
+    if (input.wasPressed(
         GLFW_KEY_R)) {
 
       resetGame();
@@ -294,6 +324,14 @@ public class Game {
         throttle,
         steering,
         brake,
+        city);
+
+    /*
+     * El tráfico autónomo utiliza el mismo deltaTime
+     * que el resto de los sistemas dinámicos.
+     */
+    autonomousTraffic.update(
+        deltaTime,
         city);
 
     /*
@@ -394,6 +432,13 @@ public class Game {
 
     deliveryManager.render(renderer);
 
+    /*
+     * El tráfico autónomo se dibuja antes del automóvil
+     * controlado y antes del segundo pase del minimapa.
+     */
+    autonomousTraffic.render(
+        renderer);
+
     car.render(renderer);
 
     /*
@@ -406,6 +451,18 @@ public class Game {
         city,
         car,
         deliveryManager,
+        lighting,
+
+        window.getFramebufferWidth(),
+        window.getFramebufferHeight());
+
+    /*
+     * El HUD se dibuja después del minimapa
+     * para permanecer sobre todos los elementos 3D.
+     */
+    hud.render(
+        renderer,
+        car,
         lighting,
 
         window.getFramebufferWidth(),
@@ -534,6 +591,8 @@ public class Game {
 
     trafficLights.reset();
 
+    autonomousTraffic.reset();
+
     /*
      * ========================================================
      * ILUMINACIÓN
@@ -569,6 +628,14 @@ public class Game {
      */
 
     minimap.reset();
+
+    /*
+     * ========================================================
+     * INTERFAZ
+     * ========================================================
+     */
+
+    hud.reset();
 
     refreshWindowTitle();
 

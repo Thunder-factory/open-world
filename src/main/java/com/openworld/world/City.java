@@ -132,6 +132,27 @@ public final class City {
 
   private static final float PARK_HEIGHT = 0.10f;
 
+  /*
+   * ============================================================
+   * PARADAS DE AUTOBÚS
+   * ============================================================
+   */
+
+  /*
+   * La parada se coloca cerca del borde sur del parque,
+   * junto a la calle adyacente.
+   */
+  private static final float BUS_STOP_EDGE_OFFSET = 4.15f;
+
+  /*
+   * Dimensiones principales del refugio.
+   */
+  private static final float BUS_STOP_WIDTH = 2.40f;
+
+  private static final float BUS_STOP_DEPTH = 0.65f;
+
+  private static final float BUS_STOP_HEIGHT = 2.35f;
+
   public City() {
 
     validateMap();
@@ -375,7 +396,6 @@ public final class City {
         z,
         buildingSize,
         buildingHeight,
-        seed,
         night);
   }
 
@@ -391,7 +411,6 @@ public final class City {
       float buildingZ,
       float buildingSize,
       float buildingHeight,
-      int seed,
       boolean night) {
 
     /*
@@ -609,6 +628,17 @@ public final class City {
         renderer,
         parkX,
         parkZ + 1.25f);
+
+    /*
+     * La parada queda junto al borde sur del parque.
+     *
+     * La celda contigua corresponde a una calle
+     * en la distribución actual de los parques.
+     */
+    drawBusStop(
+        renderer,
+        parkX,
+        parkZ + BUS_STOP_EDGE_OFFSET);
   }
 
   private void drawTree(
@@ -797,6 +827,257 @@ public final class City {
         0.18f,
         0.18f,
         0.18f);
+  }
+
+  /*
+   * ============================================================
+   * PARADA DE AUTOBÚS
+   * ============================================================
+   */
+
+  private void drawBusStop(
+      Renderer renderer,
+      float x,
+      float z) {
+
+    /*
+     * ========================================================
+     * PLATAFORMA
+     * ========================================================
+     *
+     * Una base ligeramente elevada permite distinguir
+     * visualmente el área del refugio.
+     */
+
+    renderer.box(
+        x,
+        PARK_HEIGHT + 0.04f,
+        z,
+
+        BUS_STOP_WIDTH + 0.55f,
+        0.08f,
+        BUS_STOP_DEPTH + 0.55f,
+
+        0.48f,
+        0.49f,
+        0.48f);
+
+    /*
+     * ========================================================
+     * SOPORTES
+     * ========================================================
+     */
+
+    float supportY = PARK_HEIGHT
+        + BUS_STOP_HEIGHT / 2.0f;
+
+    float supportOffset = BUS_STOP_WIDTH / 2.0f
+        - 0.18f;
+
+    renderer.box(
+        x - supportOffset,
+        supportY,
+        z - 0.18f,
+
+        0.12f,
+        BUS_STOP_HEIGHT,
+        0.12f,
+
+        0.18f,
+        0.20f,
+        0.22f);
+
+    renderer.box(
+        x + supportOffset,
+        supportY,
+        z - 0.18f,
+
+        0.12f,
+        BUS_STOP_HEIGHT,
+        0.12f,
+
+        0.18f,
+        0.20f,
+        0.22f);
+
+    /*
+     * ========================================================
+     * TECHO
+     * ========================================================
+     */
+
+    float roofY = PARK_HEIGHT
+        + BUS_STOP_HEIGHT
+        + 0.08f;
+
+    renderer.box(
+        x,
+        roofY,
+        z,
+
+        BUS_STOP_WIDTH + 0.30f,
+        0.16f,
+        BUS_STOP_DEPTH + 0.35f,
+
+        0.16f,
+        0.28f,
+        0.40f);
+
+    /*
+     * ========================================================
+     * PANEL TRASERO
+     * ========================================================
+     *
+     * Se utiliza un tono azulado para simular
+     * un panel de vidrio oscuro.
+     */
+
+    renderer.box(
+        x,
+        PARK_HEIGHT + 1.18f,
+        z - BUS_STOP_DEPTH / 2.0f,
+
+        BUS_STOP_WIDTH - 0.30f,
+        1.75f,
+        0.07f,
+
+        0.12f,
+        0.24f,
+        0.32f);
+
+    /*
+     * ========================================================
+     * FRANJA DEL PANEL
+     * ========================================================
+     *
+     * Un elemento claro mejora la identificación
+     * visual del mobiliario.
+     */
+
+    renderer.box(
+        x,
+        PARK_HEIGHT + 1.72f,
+        z - BUS_STOP_DEPTH / 2.0f - 0.045f,
+
+        BUS_STOP_WIDTH - 0.45f,
+        0.14f,
+        0.04f,
+
+        0.18f,
+        0.62f,
+        0.88f);
+
+    /*
+     * ========================================================
+     * BANCO INTERIOR
+     * ========================================================
+     */
+
+    renderer.box(
+        x,
+        PARK_HEIGHT + 0.52f,
+        z + 0.02f,
+
+        1.75f,
+        0.16f,
+        0.40f,
+
+        0.46f,
+        0.25f,
+        0.10f);
+
+    /*
+     * Patas del banco.
+     */
+
+    renderer.box(
+        x - 0.58f,
+        PARK_HEIGHT + 0.30f,
+        z + 0.02f,
+
+        0.10f,
+        0.38f,
+        0.10f,
+
+        0.17f,
+        0.17f,
+        0.17f);
+
+    renderer.box(
+        x + 0.58f,
+        PARK_HEIGHT + 0.30f,
+        z + 0.02f,
+
+        0.10f,
+        0.38f,
+        0.10f,
+
+        0.17f,
+        0.17f,
+        0.17f);
+
+    /*
+     * ========================================================
+     * POSTE DE PARADA
+     * ========================================================
+     *
+     * El poste se desplaza lateralmente para no quedar
+     * superpuesto con el refugio.
+     */
+
+    float signX = x + BUS_STOP_WIDTH / 2.0f + 0.55f;
+
+    float signZ = z + 0.05f;
+
+    renderer.box(
+        signX,
+        PARK_HEIGHT + 1.05f,
+        signZ,
+
+        0.10f,
+        1.90f,
+        0.10f,
+
+        0.20f,
+        0.21f,
+        0.22f);
+
+    /*
+     * ========================================================
+     * PLACA DE SEÑALIZACIÓN
+     * ========================================================
+     */
+
+    renderer.box(
+        signX,
+        PARK_HEIGHT + 2.00f,
+        signZ,
+
+        0.58f,
+        0.62f,
+        0.12f,
+
+        0.08f,
+        0.38f,
+        0.72f);
+
+    /*
+     * Un pequeño marcador amarillo permite distinguir
+     * la placa a mayor distancia.
+     */
+
+    renderer.box(
+        signX,
+        PARK_HEIGHT + 2.00f,
+        signZ + 0.07f,
+
+        0.28f,
+        0.18f,
+        0.04f,
+
+        0.95f,
+        0.78f,
+        0.12f);
   }
 
   /*
@@ -1362,8 +1643,8 @@ public final class City {
       float blue) {
 
     /*
-     * Una pequeña separación permite distinguir
-     * visualmente las celdas desde la vista superior.
+     * Las celdas utilizan su tamaño completo para formar
+     * una representación continua de la ciudad.
      */
 
     float size = CELL_SIZE;// * 0.96f;

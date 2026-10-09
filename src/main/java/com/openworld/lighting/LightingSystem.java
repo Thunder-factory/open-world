@@ -42,7 +42,6 @@ public final class LightingSystem {
    * Las farolas se ubican cerca del borde de las calles
    */
   private static final float LAMP_OFFSET = 5.8f;
-  // City.CELL_SIZE * 0.465f;
 
   private static final float LAMP_LIGHT_HEIGHT = 5.25f;
 

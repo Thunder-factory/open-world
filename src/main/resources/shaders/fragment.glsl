@@ -85,11 +85,36 @@ uniform float uHeadlightOuterCutoff;
 
 uniform float uEmissionStrength;
 
+/*
+ * ================================================================
+ * MODO SIN ILUMINACIÓN
+ * ================================================================
+ *
+ * Se utiliza para elementos de interfaz que deben conservar
+ * su color independientemente del estado DAY / NIGHT,
+ * farolas y faros.
+ */
+uniform int uUnlit;
 
 out vec4 fragColor;
 
 
 void main() {
+
+    /*
+     * Los elementos de interfaz utilizan directamente
+     * su color base y no participan en la iluminación 3D.
+     */
+    if (uUnlit == 1) {
+
+        fragColor =
+            vec4(
+                uColor,
+                1.0
+            );
+
+        return;
+    }
 
     vec3 normal =
         normalize(vNormal);
