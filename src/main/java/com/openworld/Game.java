@@ -1,86 +1,679 @@
 package com.openworld;
 
+import com.openworld.core.Input;
 import com.openworld.core.Window;
 
+import com.openworld.render.Camera;
+import com.openworld.render.Renderer;
+import com.openworld.render.Minimap;
+
+import com.openworld.vehicle.Car;
+import com.openworld.traffic.AutonomousTrafficSystem;
+
+import com.openworld.world.City;
+import com.openworld.world.TrafficLightSystem;
+
+import com.openworld.gameplay.DeliveryManager;
+import com.openworld.lighting.LightingSystem;
+import com.openworld.visual.DeliveryVisual;
+
+import com.openworld.validation.LogicValidator;
+
+import com.openworld.ui.Hud;
+
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11.*;
 
 public class Game {
 
-    private Window window;
+  private static final float MAX_DELTA_TIME = 0.05f;
 
-    public void run() {
-        try {
-            init();
-            loop();
-        } finally {
-            cleanup();
-        }
+  private static final float TITLE_UPDATE_INTERVAL = 0.20f;
+
+  private static final int DELIVERY_POINT_COUNT = 3;
+
+  private Window window;
+  private Input input;
+
+  private Renderer renderer;
+  private Camera camera;
+
+  private City city;
+  private Car car;
+
+  private DeliveryManager deliveryManager;
+  private DeliveryVisual deliveryVisual;
+  private LightingSystem lighting;
+
+  private TrafficLightSystem trafficLights;
+
+  private AutonomousTrafficSystem autonomousTraffic;
+
+  private Minimap minimap;
+
+  private Hud hud;
+
+  private double previousTime;
+
+  private float titleUpdateAccumulator;
+
+  public void run() {
+
+    try {
+
+      init();
+      loop();
+
+    } finally {
+
+      cleanup();
+    }
+  }
+
+  private void init() {
+
+    window = new Window(
+        1280,
+        720,
+        "Open World");
+
+    window.create();
+
+    input = new Input(
+        window.getHandle());
+
+    renderer = new Renderer();
+
+    city = new City();
+
+    autonomousTraffic = new AutonomousTrafficSystem(
+        city);
+
+    trafficLights = new TrafficLightSystem(
+        city);
+
+    lighting = new LightingSystem(city);
+
+    /*
+     * ========================================================
+     * AUTO
+     * ========================================================
+     */
+
+    float spawnX = city.getCellCenterX(5);
+
+    float spawnZ = city.getCellCenterZ(5);
+
+    car = new Car(
+        spawnX,
+        spawnZ,
+        0.0f);
+
+    if (!city.canDrive(
+        car.getX(),
+        car.getZ(),
+        car.getCollisionRadius())) {
+      throw new IllegalStateException(
+          "La posicion inicial del vehiculo no es transitable");
     }
 
-    private void init() {
-        window = new Window(
-                1280,
-                720,
-                "Open World"
-        );
+    lighting.update(car);
 
-        window.create();
+    deliveryManager = new DeliveryManager(
+        city,
+        car.getX(),
+        car.getZ(),
+        DELIVERY_POINT_COUNT);
 
-        glEnable(GL_DEPTH_TEST);
+    deliveryVisual = new DeliveryVisual();
 
-        System.out.println("Open World iniciado correctamente");
+    camera = new Camera();
+    /**
+     * La posicion inicial se calcula a partir
+     * del estado del vehiculo.
+     */
+    camera.setMode(Camera.Mode.FOLLOW);
+
+    camera.update(car, city);
+
+    /*
+     * El minimapa mantiene su propio estado de visibilidad
+     * y utiliza una vista superior independiente.
+     */
+    minimap = new Minimap();
+
+    /*
+     * La interfaz se renderiza como una capa 2D
+     * independiente de la cámara principal.
+     */
+    hud = new Hud();
+
+    /*
+     * Las comprobaciones se realizan después de inicializar
+     * todos los sistemas que contienen lógica verificable.
+     */
+    LogicValidator.run(
+        city,
+        car,
+        deliveryManager,
+        lighting,
+        trafficLights,
+        autonomousTraffic,
+        camera,
+        minimap);
+
+    titleUpdateAccumulator = 0.0f;
+
+    previousTime = glfwGetTime();
+
+    refreshWindowTitle();
+
+    System.out.println(
+        "Open World iniciado correctamente");
+  }
+
+  private void loop() {
+
+    while (!window.shouldClose()) {
+
+      float deltaTime = calculateDeltaTime();
+
+      input.update();
+
+      processInput();
+
+      update(
+          deltaTime);
+
+      render();
+
+      window.update();
+    }
+  }
+
+  private float calculateDeltaTime() {
+
+    double currentTime = glfwGetTime();
+
+    float deltaTime = (float) (currentTime
+        - previousTime);
+
+    previousTime = currentTime;
+
+    return Math.min(
+        deltaTime,
+        MAX_DELTA_TIME);
+  }
+
+  private void processInput() {
+
+    if (input.wasPressed(
+        GLFW_KEY_ESCAPE)) {
+
+      window.requestClose();
     }
 
-    private void loop() {
+    if (input.wasPressed(
+        GLFW_KEY_C)) {
 
-        while (!window.shouldClose()) {
-
-            processInput();
-
-            update();
-
-            render();
-
-            window.update();
-        }
+      System.out.println(
+          "C -> cámara");
+      camera.toggleMode();
+      System.out.println("Camara ->  " + camera.getMode());
     }
 
-    private void processInput() {
+    if (input.wasPressed(
+        GLFW_KEY_N)) {
 
-        if (window.isKeyPressed(GLFW_KEY_ESCAPE)) {
-            window.requestClose();
-        }
+      lighting.toggleDayNight();
+      System.out.println(
+          "Iluminacion -> " + lighting.getModeName());
     }
 
-    private void update() {
-        // Más adelante:
-        // auto.update(deltaTime);
-        // semaforos.update(deltaTime);
-        // entregas.update(...);
+    if (input.wasPressed(
+        GLFW_KEY_F)) {
+      lighting.toggleHeadlights();
+
+      System.out.println(
+          "Faros -> " + lighting.getHeadlightStateName());
     }
 
-    private void render() {
+    if (input.wasPressed(
+        GLFW_KEY_M)) {
 
-        glClearColor(
-                0.12f,
-                0.18f,
-                0.24f,
-                1.0f
-        );
+      minimap.toggle();
 
-        glClear(
-                GL_COLOR_BUFFER_BIT |
-                GL_DEPTH_BUFFER_BIT
-        );
+      System.out.println(
+          "Minimapa -> " + minimap.getStateName());
     }
 
-    private void cleanup() {
+    if (input.wasPressed(
+        GLFW_KEY_H)) {
 
-        if (window != null) {
-            window.destroy();
-        }
+      hud.toggleHelp();
 
-        System.out.println("Open World finalizado");
+      System.out.println(
+          "Ayuda -> "
+              + hud.getHelpStateName());
     }
+
+    if (input.wasPressed(
+        GLFW_KEY_R)) {
+
+      resetGame();
+    }
+
+    if (input.wasPressed(
+        GLFW_KEY_ENTER)
+        && deliveryManager.isFinished()) {
+
+      hud.dismissCompletionPanel();
+    }
+  }
+
+  private void update(
+      float deltaTime) {
+
+    /*
+     * ========================================================
+     * ACELERADOR
+     * ========================================================
+     */
+
+    boolean forward = input.isDown(GLFW_KEY_W)
+        ||
+        input.isDown(GLFW_KEY_UP);
+
+    boolean backward = input.isDown(GLFW_KEY_S)
+        ||
+        input.isDown(GLFW_KEY_DOWN);
+
+    float throttle = 0.0f;
+
+    if (forward) {
+      throttle += 1.0f;
+    }
+
+    if (backward) {
+      throttle -= 1.0f;
+    }
+
+    /*
+     * ========================================================
+     * DIRECCIÓN
+     * ========================================================
+     */
+
+    boolean left = input.isDown(GLFW_KEY_A)
+        ||
+        input.isDown(GLFW_KEY_LEFT);
+
+    boolean right = input.isDown(GLFW_KEY_D)
+        ||
+        input.isDown(GLFW_KEY_RIGHT);
+
+    float steering = 0.0f;
+
+    if (left) {
+      steering += 1.0f;
+    }
+
+    if (right) {
+      steering -= 1.0f;
+    }
+
+    /*
+     * ========================================================
+     * FRENO
+     * ========================================================
+     */
+
+    boolean brake = input.isDown(
+        GLFW_KEY_SPACE);
+
+    /*
+     * ========================================================
+     * AUTO + COLISIONES
+     * ========================================================
+     */
+
+    /*
+     * El tráfico autónomo utiliza el mismo deltaTime
+     * que el resto de los sistemas dinámicos.
+     */
+    autonomousTraffic.update(
+        deltaTime,
+        city);
+
+    car.update(
+        deltaTime,
+        throttle,
+        steering,
+        brake,
+        city,
+        autonomousTraffic);
+
+    /*
+     * Las fuentes de luz delanteras se actualizan
+     * después del movimiento del vehículo.
+     */
+    lighting.update(
+        car);
+
+    deliveryManager.update(deltaTime, car);
+
+    hud.update(
+        deltaTime,
+        deliveryManager);
+
+    /*
+     * El ciclo de los semáforos utiliza
+     * el tiempo transcurrido entre frames.
+     */
+    trafficLights.update(
+        deltaTime);
+
+    camera.setFrontView(
+        input.isDown(GLFW_KEY_Q));
+
+    /**
+     * La camara se actualiza despues del automovil
+     * para utilizar su posicion y orientacion actuales.
+     */
+    camera.update(car, city);
+
+    updateWindowTitle(deltaTime);
+
+    /*
+     * ========================================================
+     * DEBUG
+     * ========================================================
+     */
+
+    if (input.isDown(
+        GLFW_KEY_T)) {
+
+      boolean valid = city.canDrive(
+          car.getX(),
+          car.getZ(),
+          car.getCollisionRadius());
+
+      System.out.printf(
+          "dt: %.5f | "
+              + "speed: %.2f | "
+              + "x: %.2f | "
+              + "z: %.2f | "
+              + "angle: %.1f° | "
+              + "camera: %s | "
+              + "light: %s | "
+              + "headlights: %s | "
+              + "minimap: %s | "
+              + "traffic: %s | "
+              + "delivery: %d/%d | "
+              + "time: %.1f | "
+              + "finished: %s | "
+              + "valid: %s%n",
+
+          deltaTime,
+          car.getSpeed(),
+          car.getX(),
+          car.getZ(),
+
+          Math.toDegrees(
+              car.getAngle()),
+
+          camera.getMode(),
+
+          lighting.getModeName(),
+
+          lighting.getHeadlightStateName(),
+
+          minimap.getStateName(),
+
+          trafficLights.getPhaseName(),
+
+          deliveryManager.getCompletedDeliveries(),
+          deliveryManager.getTotalDestinations(),
+
+          deliveryManager.getElapsedTime(),
+
+          deliveryManager.isFinished(),
+
+          valid);
+    }
+  }
+
+  private void render() {
+
+    renderer.beginFrame(
+        camera,
+        window.getAspectRatio(),
+        lighting);
+
+    city.render(renderer, lighting.isNight());
+
+    lighting.render(renderer);
+
+    trafficLights.render(renderer);
+
+    if (deliveryManager.hasActiveDestination()) {
+      deliveryVisual.render(
+          renderer,
+          deliveryManager.getCurrentDestinationX(),
+          deliveryManager.getCurrentDestinationZ(),
+          deliveryManager.getArrivalRadius(),
+          deliveryManager.getElapsedTime());
+    }
+
+    /*
+     * El tráfico autónomo se dibuja antes del automóvil
+     * controlado y antes del segundo pase del minimapa.
+     */
+    autonomousTraffic.render(
+        renderer);
+
+    car.render(renderer);
+
+    /*
+     * El minimapa se dibuja como un segundo pase
+     * después de completar la vista principal.
+     */
+
+    minimap.render(
+        renderer,
+        city,
+        car,
+        deliveryManager,
+        lighting,
+
+        window.getFramebufferWidth(),
+        window.getFramebufferHeight());
+
+    /*
+     * El HUD se dibuja después del minimapa
+     * para permanecer sobre todos los elementos 3D.
+     */
+    hud.render(
+        renderer,
+        car,
+        lighting,
+        deliveryManager,
+
+        window.getFramebufferWidth(),
+        window.getFramebufferHeight());
+
+    renderer.endFrame();
+  }
+
+  private void cleanup() {
+
+    if (renderer != null) {
+
+      renderer.cleanup();
+
+      renderer = null;
+    }
+
+    if (input != null) {
+
+      input.cleanup();
+
+      input = null;
+    }
+
+    if (window != null) {
+
+      window.destroy();
+
+      window = null;
+    }
+
+    System.out.println(
+        "Open World finalizado");
+  }
+
+  /*
+   * ============================================================
+   * TÍTULO DE VENTANA
+   * ============================================================
+   */
+
+  private void updateWindowTitle(
+      float deltaTime) {
+
+    titleUpdateAccumulator += deltaTime;
+
+    if (titleUpdateAccumulator < TITLE_UPDATE_INTERVAL) {
+
+      return;
+    }
+
+    titleUpdateAccumulator = 0.0f;
+
+    refreshWindowTitle();
+  }
+
+  private void refreshWindowTitle() {
+
+    String deliveryText;
+
+    if (deliveryManager.isFinished()) {
+
+      deliveryText = deliveryManager.getTotalDestinations()
+          + "/"
+          + deliveryManager.getTotalDestinations()
+          + " COMPLETADO";
+
+    } else {
+
+      deliveryText = deliveryManager.getCompletedDeliveries()
+          + "/"
+          + deliveryManager.getTotalDestinations();
+    }
+
+    String title = String.format(
+        "Open World"
+            + " | Vel: %.1f"
+            + " | Ent: %s"
+            + " | Tiempo: %.1fs"
+            + " | %s"
+            + " | Faros: %s"
+            + " | Cam: %s"
+            + " | Mapa: %s",
+
+        car.getSpeed(),
+
+        deliveryText,
+
+        deliveryManager.getElapsedTime(),
+
+        lighting.getModeName(),
+
+        lighting.getHeadlightStateName(),
+
+        camera.getMode(),
+
+        minimap.getStateName());
+
+    window.setTitle(
+        title);
+  }
+
+  private void resetGame() {
+
+    /*
+     * ========================================================
+     * VEHÍCULO
+     * ========================================================
+     */
+
+    car.reset();
+
+    /*
+     * ========================================================
+     * ACTIVIDAD DE ENTREGAS
+     * ========================================================
+     */
+
+    deliveryManager.reset();
+
+    /*
+     * ========================================================
+     * SEMÁFOROS
+     * ========================================================
+     */
+
+    trafficLights.reset();
+
+    autonomousTraffic.reset();
+
+    /*
+     * ========================================================
+     * ILUMINACIÓN
+     * ========================================================
+     *
+     * Se restaura:
+     *
+     * DAY
+     * faros OFF
+     * posición de faros sincronizada con el auto
+     */
+
+    lighting.reset(
+        car);
+
+    /*
+     * ========================================================
+     * CÁMARA
+     * ========================================================
+     */
+
+    camera.setMode(
+        Camera.Mode.FOLLOW);
+
+    camera.update(
+        car,
+        city);
+
+    /*
+     * ========================================================
+     * MINIMAPA
+     * ========================================================
+     */
+
+    minimap.reset();
+
+    /*
+     * ========================================================
+     * INTERFAZ
+     * ========================================================
+     */
+
+    hud.reset();
+
+    refreshWindowTitle();
+
+    System.out.println(
+        "Estado reiniciado");
+  }
+
 }
